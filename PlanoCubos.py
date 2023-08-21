@@ -17,7 +17,7 @@ screen_height = 500
 #vc para el obser.
 FOVY=60.0
 ZNEAR=0.01
-ZFAR=2000.0
+ZFAR=1800.0
 #Variables para definir la posicion del observador
 #gluLookAt(EYE_X,EYE_Y,EYE_Z,CENTER_X,CENTER_Y,CENTER_Z,UP_X,UP_Y,UP_Z)
 EYE_X=300.0
@@ -39,9 +39,11 @@ Z_MAX=500
 #Dimension del plano
 DimBoard = 200
 
+
 #cubo = Cubo(DimBoard, 1.0)
 cubos = []
 ncubos = 20
+
 
 # Variables para el control del observador
 theta = 0.0
@@ -88,8 +90,7 @@ def Texturas(filepath):
     image_data = pygame.image.tostring(image, "RGBA")
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data)
     glGenerateMipmap(GL_TEXTURE_2D)
-
-
+    
 def Init():
     screen = pygame.display.set_mode(
         (screen_width, screen_height), DOUBLEBUF | OPENGL)
@@ -134,14 +135,12 @@ def planoText():
     glEnd()
     glDisable(GL_TEXTURE_2D)
 
-
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     #Se dibuja cubos
     for obj in cubos:
         obj.draw()
-        obj.update()
-        
+        obj.update()    
     Axis()
     #Se dibuja el plano gris
     planoText()
@@ -152,7 +151,7 @@ def display():
     glVertex3d(DimBoard, 0, DimBoard)
     glVertex3d(DimBoard, 0, -DimBoard)
     glEnd()
-
+    
 def lookAt():
     glLoadIdentity()
     rad = theta * math.pi / 180
