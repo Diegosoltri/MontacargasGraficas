@@ -44,6 +44,10 @@ pygame.init()
 cubos = []
 ncubos = 20
 
+# Arreglo para el manejo de texturas
+textures = []
+filename1 = "img1.bmp"
+
 def Axis():
     glShadeModel(GL_FLAT)
     glLineWidth(3.0)
@@ -67,6 +71,21 @@ def Axis():
     glEnd()
     glLineWidth(1.0)
 
+def Texturas(filepath):
+    textures.append(glGenTextures(1))
+    id = len(textures) - 1
+    glBindTexture(GL_TEXTURE_2D, textures[id])
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    image = pygame.image.load(filepath).convert()
+    w, h = image.get_rect().size
+    image_data = pygame.image.tostring(image, "RGBA")
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data)
+    glGenerateMipmap(GL_TEXTURE_2D)
+
+
 def Init():
     screen = pygame.display.set_mode(
         (screen_width, screen_height), DOUBLEBUF | OPENGL)
@@ -82,9 +101,11 @@ def Init():
     glClearColor(0,0,0,0)
     glEnable(GL_DEPTH_TEST)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+
+    Texturas(filename1)
     
     for i in range(ncubos):
-        cubos.append(Cubo(DimBoard, 1.0))
+        cubos.append(Cubo(DimBoard, 1.0, textures, 0))
 
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
