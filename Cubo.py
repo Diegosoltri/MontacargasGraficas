@@ -13,31 +13,7 @@ import math
 class Cubo:
     def __init__(self, dim, vel):
         # Se inicializa las coordenadas de los vertices del cubo
-        self.vertexCoords = [
-            1,
-            1,
-            1,
-            1,
-            1,
-            -1,
-            1,
-            -1,
-            -1,
-            1,
-            -1,
-            1,
-            -1,
-            1,
-            1,
-            -1,
-            1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            1,
+        self.vertexCoords = [1,1,1,1,1,-1,1,-1,-1,1,-1,1,-1,1,1,-1,1,-1,-1,-1,-1,-1,-1,1,
         ]
 
         self.elementArray = [
