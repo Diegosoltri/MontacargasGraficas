@@ -152,6 +152,43 @@ def display():
     glVertex3d(DimBoard, 0, -DimBoard)
     glEnd()
     
+    # Draw the walls bounding the plane
+    wall_height = 50.0  # Adjust the wall height as needed
+    
+    glColor3f(0.8, 0.8, 0.8)  # Light gray color for walls
+    
+    # Draw the left wall
+    glBegin(GL_QUADS)
+    glVertex3d(-DimBoard, 0, -DimBoard)
+    glVertex3d(-DimBoard, 0, DimBoard)
+    glVertex3d(-DimBoard, wall_height, DimBoard)
+    glVertex3d(-DimBoard, wall_height, -DimBoard)
+    glEnd()
+    
+    # Draw the right wall
+    glBegin(GL_QUADS)
+    glVertex3d(DimBoard, 0, -DimBoard)
+    glVertex3d(DimBoard, 0, DimBoard)
+    glVertex3d(DimBoard, wall_height, DimBoard)
+    glVertex3d(DimBoard, wall_height, -DimBoard)
+    glEnd()
+    
+    # Draw the front wall
+    glBegin(GL_QUADS)
+    glVertex3d(-DimBoard, 0, DimBoard)
+    glVertex3d(DimBoard, 0, DimBoard)
+    glVertex3d(DimBoard, wall_height, DimBoard)
+    glVertex3d(-DimBoard, wall_height, DimBoard)
+    glEnd()
+    
+    # Draw the back wall
+    glBegin(GL_QUADS)
+    glVertex3d(-DimBoard, 0, -DimBoard)
+    glVertex3d(DimBoard, 0, -DimBoard)
+    glVertex3d(DimBoard, wall_height, -DimBoard)
+    glVertex3d(-DimBoard, wall_height, -DimBoard)
+    glEnd()
+    
 def lookAt():
     glLoadIdentity()
     rad = theta * math.pi / 180
