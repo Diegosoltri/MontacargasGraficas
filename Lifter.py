@@ -120,6 +120,7 @@ class Lifter:
 
         glEnd()
 
+        #Wheels
         glPushMatrix()
         glTranslatef(0,1.5,0)
         glScaled(0.8,0.8,0.8)
@@ -158,6 +159,21 @@ class Lifter:
         glColor3f(0.0, 0.0, 1.0)
         wheel = Cubo(self.textures, 0)
         wheel.draw()
+        glPopMatrix()
+
+        #Lifter
+        glPushMatrix()
+        glTranslatef(0,-1.5,0) #Up and down
+        glBegin(GL_QUADS)
+        glTexCoord2f(0.0, 0.0)
+        glVertex3d(1, 1, 1)
+        glTexCoord2f(0.0, 1.0)
+        glVertex3d(1, 1, -1)
+        glTexCoord2f(1.0, 1.0)
+        glVertex3d(3, 1, -1)
+        glTexCoord2f(1.0, 0.0)
+        glVertex3d(3, 1, 1)
+        glEnd()
         glPopMatrix()
 
 
