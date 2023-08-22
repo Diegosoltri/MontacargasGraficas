@@ -1,7 +1,7 @@
 
 import pygame
 from pygame.locals import *
-import Cubo
+from Cubo import Cubo
 
 # Cargamos las bibliotecas de OpenGL
 from OpenGL.GL import *
@@ -18,7 +18,7 @@ class Lifter:
         self.dim = dim
         # Se inicializa una posicion aleatoria en el tablero
         # self.Position = [random.randint(-dim, dim), 2, random.randint(-dim, dim)]
-        self.Position = [0, 5, 0]
+        self.Position = [0, 6, 0]
         # Inicializar las coordenadas (x,y,z) del cubo en el tablero
         # almacenandolas en el vector Position
         # ...
@@ -61,10 +61,9 @@ class Lifter:
     def draw(self):
         glPushMatrix()
         glTranslatef(self.Position[0], self.Position[1], self.Position[2])
-        glScaled(5, 5, 5)
         # Se dibuja el cubo
         # ...
-
+        glScaled(5, 5, 5)
         glColor3f(1.0, 1.0, 1.0)
         #glEnable(GL_TEXTURE_2D)
         #front face
@@ -80,7 +79,6 @@ class Lifter:
         glVertex3d(1, -1, 1)
 
         #2nd face
-        glColor3f(0.0, 1.0, 1.0)
         glTexCoord2f(0.0, 0.0)
         glVertex3d(-2, 1, 1)
         glTexCoord2f(0.0, 1.0)
@@ -91,7 +89,6 @@ class Lifter:
         glVertex3d(-2, -1, 1)
 
         #3rd face
-        glColor3f(0.0, 0.0, 1.0)
         glTexCoord2f(0.0, 0.0)
         glVertex3d(-2, 1, -1)
         glTexCoord2f(0.0, 1.0)
@@ -102,7 +99,6 @@ class Lifter:
         glVertex3d(-2, -1, -1)
 
         #4th face
-        glColor3f(1.0, 0.0, 0.0)
         glTexCoord2f(0.0, 0.0)
         glVertex3d(1, 1, -1)
         glTexCoord2f(0.0, 1.0)
@@ -113,7 +109,6 @@ class Lifter:
         glVertex3d(1, -1, -1)
 
         #top
-        glColor3f(1.0, 1.0, 1.0)
         glTexCoord2f(0.0, 0.0)
         glVertex3d(1, 1, 1)
         glTexCoord2f(0.0, 1.0)
@@ -122,10 +117,48 @@ class Lifter:
         glVertex3d(-2, 1, -1)
         glTexCoord2f(1.0, 0.0)
         glVertex3d(1, 1, -1)
-        
-
-        
 
         glEnd()
+
+        glPushMatrix()
+        glTranslatef(0,1.5,0)
+        glScaled(0.8,0.8,0.8)
+        glColor3f(0.0, 0.0, 1.0)
+        head = Cubo(self.textures, 0)
+        head.draw()
+        glPopMatrix()
+
+        glPushMatrix()
+        glTranslatef(-1.2,-1,1)
+        glScaled(0.3,0.3,0.3)
+        glColor3f(0.0, 0.0, 1.0)
+        wheel = Cubo(self.textures, 0)
+        wheel.draw()
+        glPopMatrix()
+
+        glPushMatrix()
+        glTranslatef(0.5,-1,1)
+        glScaled(0.3,0.3,0.3)
+        glColor3f(0.0, 0.0, 1.0)
+        wheel = Cubo(self.textures, 0)
+        wheel.draw()
+        glPopMatrix()
+
+        glPushMatrix()
+        glTranslatef(0.5,-1,-1)
+        glScaled(0.3,0.3,0.3)
+        glColor3f(0.0, 0.0, 1.0)
+        wheel = Cubo(self.textures, 0)
+        wheel.draw()
+        glPopMatrix()
+
+        glPushMatrix()
+        glTranslatef(-1.2,-1,-1)
+        glScaled(0.3,0.3,0.3)
+        glColor3f(0.0, 0.0, 1.0)
+        wheel = Cubo(self.textures, 0)
+        wheel.draw()
+        glPopMatrix()
+
 
         glPopMatrix()
