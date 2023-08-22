@@ -111,7 +111,7 @@ def Init():
     # Texturas(filename2)
     
     for i in range(ncubos):
-        cubos.append(Cubo(DimBoard, 2.0))
+        cubos.append(Cubo(DimBoard, 2.0, textures, 0))
         
 def planoText():
     # activate textures
