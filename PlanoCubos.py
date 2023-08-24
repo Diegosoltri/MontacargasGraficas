@@ -199,20 +199,22 @@ def lookAt():
 done = False
 Init()
 while not done:
+    keys = pygame.key.get_pressed()  # Checking pressed keys
+    if keys[pygame.K_RIGHT]:
+        if theta > 359.0:
+            theta = 0
+        else:
+            theta += 1.0
+        lookAt()
+    if keys[pygame.K_LEFT]:
+        if theta < 1.0:
+            theta = 360.0
+        else:
+            theta -= 1.0
+        lookAt()
+
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                if theta > 359.0:
-                    theta = 0
-                else:
-                    theta += 1.0
-                lookAt()
-            if event.key == pygame.K_LEFT:
-                if theta < 1.0:
-                    theta = 360.0
-                else:
-                    theta -= 1.0
-                lookAt()
             if event.key == pygame.K_ESCAPE:
                 done = True
         if event.type == pygame.QUIT:
