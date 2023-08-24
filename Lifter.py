@@ -32,6 +32,9 @@ class Lifter:
 
         # Arreglo de texturas
         self.textures = textures
+        
+        self.platformHeight = -1.5
+        self.platformUp = True
 
     def update(self):
         # Se debe de calcular la posible nueva posicion del cubo a partir de su
@@ -49,6 +52,20 @@ class Lifter:
         self.angle = math.acos(self.Direction[0]) * 180 / math.pi
         if self.Direction[2] > 0:
             self.angle = 360 - self.angle
+            
+        # Move platform
+        delta = 0.01
+        if self.platformUp:
+            if self.platformHeight >= 0:
+                self.platformUp = False
+            else:
+                self.platformHeight += delta
+        else:
+            if self.platformHeight <= -1.5:
+                self.platformUp = True
+            else:
+                self.platformHeight -= delta
+        
 
     def draw(self):
         glPushMatrix()
@@ -157,7 +174,7 @@ class Lifter:
         # Lifter
         glPushMatrix()
         glColor3f(0.0, 0.0, 0.0)
-        glTranslatef(0, 0, 0)  # Up and down
+        glTranslatef(0, self.platformHeight, 0)  # Up and down
         glBegin(GL_QUADS)
         glTexCoord2f(0.0, 0.0)
         glVertex3d(1, 1, 1)
