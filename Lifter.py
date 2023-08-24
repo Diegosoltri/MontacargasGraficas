@@ -15,23 +15,20 @@ class Lifter:
     def __init__(self, dim, vel, textures, txtIndex):
         self.dim = dim
         # Se inicializa una posicion aleatoria en el tablero
-        # self.Position = [random.randint(-dim, dim), 2, random.randint(-dim, dim)]
-        self.Position = [0, 6, 0]
+        self.Position = [random.randint(-dim, dim), 6, random.randint(-dim, dim)]
+        # self.Position = [0, 6, 0]
         # Inicializar las coordenadas (x,y,z) del cubo en el tablero
         # almacenandolas en el vector Position
-        # ...
+
         # Se inicializa un vector de direccion aleatorio
         dirX = random.randint(-10, 10) or 1
         dirZ = random.randint(-1, 1) or 1
-        magnitude = math.sqrt(dirX ** 2 + dirZ ** 2)
+        magnitude = math.sqrt(dirX**2 + dirZ**2)
         self.Direction = [(dirX / magnitude), 0, (dirZ / magnitude)]
         self.angle = 0
         self.vel = vel
         # El vector aleatorio debe de estar sobre el plano XZ (la altura en Y debe ser fija)
         # Se normaliza el vector de direccion
-        # ...
-        # Se cambia la maginitud del vector direccion con la variable vel
-        # ...
 
         # Arreglo de texturas
         self.textures = textures
@@ -42,32 +39,24 @@ class Lifter:
     def update(self):
         # Se debe de calcular la posible nueva posicion del cubo a partir de su
         # posicion acutual (Position) y el vector de direccion (Direction)
-        # ...
         newX = self.Position[0] + self.Direction[0] * self.vel
-        newZ = self.Position[2] + self.Direction[2] *self.vel
-        if newX < -self.dim or newX > self.dim:
+        newZ = self.Position[2] + self.Direction[2] * self.vel
+        if newX - 10 < -self.dim or newX + 10 > self.dim:
             self.Direction[0] *= -1
         else:
             self.Position[0] = newX
-        if newZ < -self.dim or newZ > self.dim:
+        if newZ - 10 < -self.dim or newZ + 10 > self.dim:
             self.Direction[2] *= -1
         else:
             self.Position[2] = newZ
         self.angle = math.acos(self.Direction[0]) * 180 / math.pi
-        if (self.Direction[2] > 0):
+        if self.Direction[2] > 0:
             self.angle = 360 - self.angle
-        print(self.angle)
-
-        # Se debe verificar que el objeto cubo, con su nueva posible direccion
-        # no se salga del plano actual (DimBoard)
-        # ...
 
     def draw(self):
         glPushMatrix()
         glTranslatef(self.Position[0], self.Position[1], self.Position[2])
         glRotatef(self.angle, 0, 1, 0)
-        # Se dibuja el cubo
-        # ...
         glScaled(5, 5, 5)
         glColor3f(1.0, 1.0, 1.0)
         # glEnable(GL_TEXTURE_2D)
