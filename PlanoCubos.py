@@ -20,9 +20,9 @@ ZNEAR=0.01
 ZFAR=1800.0
 #Variables para definir la posicion del observador
 #gluLookAt(EYE_X,EYE_Y,EYE_Z,CENTER_X,CENTER_Y,CENTER_Z,UP_X,UP_Y,UP_Z)
-EYE_X=300.0
-EYE_Y=200.0
-EYE_Z=300.0
+EYE_X=100.0
+EYE_Y=100.0
+EYE_Z=100.0
 CENTER_X=0
 CENTER_Y=0
 CENTER_Z=0
@@ -51,8 +51,7 @@ radius = 300
 
 # Arreglo para el manejo de texturas
 textures = []
-filename1 = "img1.bmp"
-filename2 = ""
+filenames = ["img1.bmp", "wheel.jpeg", "walle.jpeg"]
 
 def Axis():
     glShadeModel(GL_FLAT)
@@ -107,18 +106,18 @@ def Init():
     glEnable(GL_DEPTH_TEST)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
     
-    Texturas(filename1)
-    # Texturas(filename2)
+    for i in filenames:
+        Texturas(i)
     
     for i in range(ncubos):
-        cubos.append(Lifter(DimBoard, 2.0, textures, 0))
+        cubos.append(Lifter(DimBoard, 1, textures))
         
 def planoText():
     # activate textures
     glColor(1.0, 1.0, 1.0)
-    glEnable(GL_TEXTURE_2D)
+    #glEnable(GL_TEXTURE_2D)
     # front face
-    glBindTexture(GL_TEXTURE_2D, textures[0])  # Use the first texture
+    #glBindTexture(GL_TEXTURE_2D, textures[0])  # Use the first texture
     glBegin(GL_QUADS)
     glTexCoord2f(0.0, 0.0)
     glVertex3d(-DimBoard, 0, -DimBoard)
@@ -133,7 +132,7 @@ def planoText():
     glVertex3d(DimBoard, 0, -DimBoard)
     
     glEnd()
-    glDisable(GL_TEXTURE_2D)
+    # glDisable(GL_TEXTURE_2D)
 
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
