@@ -10,7 +10,7 @@ import math
 # Se carga el archivo de la clase Cubo
 import sys
 sys.path.append('..')
-from Cubo import Cubo
+from Lifter import Lifter
 
 screen_width = 500
 screen_height = 500
@@ -111,7 +111,7 @@ def Init():
     # Texturas(filename2)
     
     for i in range(ncubos):
-        cubos.append(Cubo(DimBoard, 2.0, textures, 0))
+        cubos.append(Lifter(DimBoard, 2.0, textures, 0))
         
 def planoText():
     # activate textures
