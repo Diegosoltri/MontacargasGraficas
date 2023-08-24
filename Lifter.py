@@ -33,6 +33,7 @@ class Lifter:
         # Arreglo de texturas
         self.textures = textures
         
+        # Control variables for platform movement
         self.platformHeight = -1.5
         self.platformUp = True
 
