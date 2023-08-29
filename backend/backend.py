@@ -1,5 +1,6 @@
 import flask
 from flask.json import jsonify
+import json
 import uuid
 from cleaning_robot import Room
 from GarbageCell import GarbageCell
@@ -56,17 +57,19 @@ def create():
     cornerRobots = []
     centerRobots = []
     incinerators = []
-    getAgents(model)
+    getAgents(model, garbageCells, cornerRobots, centerRobots, incinerators)
     return (
         "ok",
         201,
-        {
-            "Location": f"/games/{id}",
-            "garbageCells": jsonify(garbageCells),
-            "cornerRobots": jsonify(cornerRobots),
-            "centerRobots": jsonify(centerRobots),
-            "incinerator": jsonify(incinerators),
-        },
+        (
+            {
+                "Location": f"/games/{id}",
+                "garbageCells": json.dumps(garbageCells),
+                "cornerRobots": json.dumps(cornerRobots),
+                "centerRobots": json.dumps(centerRobots),
+                "incinerator": json.dumps(incinerators),
+            }
+        ),
     )
 
 
@@ -79,14 +82,14 @@ def queryState(id):
     cornerRobots = []
     centerRobots = []
     incinerators = []
-    getAgents(model)
-    return (
+    getAgents(model, garbageCells, cornerRobots, centerRobots, incinerators)
+    return ("ok", 500,
         {
-            "garbageCells": jsonify(garbageCells),
-            "cornerRobots": jsonify(cornerRobots),
-            "centerRobots": jsonify(centerRobots),
-            "incinerator": jsonify(incinerators),
-        },
+            "garbageCells": json.dumps(garbageCells),
+            "cornerRobots": json.dumps(cornerRobots),
+            "centerRobots": json.dumps(centerRobots),
+            "incinerator": json.dumps(incinerators),
+        }
     )
 
 
