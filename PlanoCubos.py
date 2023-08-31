@@ -7,10 +7,12 @@ from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
 import math
+import random
 # Se carga el archivo de la clase Cubo
 import sys
 sys.path.append('..')
 from Lifter import Lifter
+from Basura import Basura
 
 screen_width = 500
 screen_height = 500
@@ -44,6 +46,8 @@ DimBoard = 200
 cubos = []
 ncubos = 20
 
+basuras = []
+nbasuras = random.randint(10, 100)
 
 # Variables para el control del observador
 theta = 0.0
@@ -51,7 +55,7 @@ radius = 300
 
 # Arreglo para el manejo de texturas
 textures = []
-filenames = ["img1.bmp", "wheel.jpeg", "walle.jpeg"]
+filenames = ["img1.bmp","wheel.jpeg", "walle.jpeg","basura.bmp"]
 
 def Axis():
     glShadeModel(GL_FLAT)
@@ -112,6 +116,9 @@ def Init():
     for i in range(ncubos):
         cubos.append(Lifter(DimBoard, 1, textures))
         
+    for i in range(nbasuras):
+        basuras.append(Basura(DimBoard,1,textures,3))
+        
 def planoText():
     # activate textures
     glColor(1.0, 1.0, 1.0)
@@ -140,6 +147,10 @@ def display():
     for obj in cubos:
         obj.draw()
         obj.update()    
+    Axis()
+    for obj in basuras:
+        obj.draw()
+        #obj.update()    
     Axis()
     #Se dibuja el plano gris
     planoText()
