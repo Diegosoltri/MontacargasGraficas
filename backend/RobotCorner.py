@@ -25,17 +25,18 @@ class RobotCorner(Agent):
 
         # limits representa los 4 límites del área de dicho robot, hay 2 conjuntos de límites, x1,y1 & x2,y2
         # por cada sección se definen sus límites de malla original y malla central
+        xtraL = 3  # an extra limit for the boundaries of the robots, so no trash is left behind
         if section == 0:
-            self.limits = (grid_size // 2 - 1, grid_size // 2 - 1, 0, 0)
+            self.limits = (grid_size // 2 + xtraL, grid_size // 2 - 1, 0, 0)
             self.c_coords = c_coords[0]
             self.c_coordsLimit = c_coords[1]
         elif section == 1:
-            self.limits = (grid_size // 2, grid_size // 2, 0, grid_size - 1)
+            self.limits = (grid_size // 2 + xtraL, grid_size // 2, 0, grid_size - 1)
             self.c_coords = c_coords[1]
             self.c_coordsLimit = c_coords[0]
         elif section == 2:
             self.limits = (
-                grid_size // 2 + 1,
+                grid_size // 2 - xtraL,
                 grid_size // 2 + 1,
                 grid_size - 1,
                 grid_size - 1,
@@ -43,7 +44,7 @@ class RobotCorner(Agent):
             self.c_coords = c_coords[2]
             self.c_coordsLimit = c_coords[3]
         else:
-            self.limits = (grid_size // 2, grid_size // 2, grid_size - 1, 0)
+            self.limits = (grid_size // 2 - xtraL, grid_size // 2, grid_size - 1, 0)
             self.c_coords = c_coords[3]
             self.c_coordsLimit = c_coords[2]
 
@@ -122,6 +123,7 @@ class RobotCorner(Agent):
                 next_move[1] -= 1
         if tuple(next_move) == self.c_coords:
             self.delivering = False
+            self.dropDirection = 1 if self.section == 0 or self.section == 3 else -1
         return next_move
 
     # Barrido de los cuadrantes externos
@@ -140,6 +142,7 @@ class RobotCorner(Agent):
             self.loaded = True
             self.delivering = True
             self.lastPos = self.pos
+            return self.pos
         # Se checa si el robot ha llegado a un borde de la malla central
         if self.pos[0] == self.c_coords[0]:
             # Se intercambian los límites del eje Y al robot para tomar en cuenta el borde de la malla central
@@ -156,14 +159,16 @@ class RobotCorner(Agent):
         if sect == 0 or sect == 2:
             i = 1 if abs(self.limits[0] - self.limits[2]) % 2 == 0 else 3
             if self.pos == (self.limits[0], self.limits[i]):
+                self.model.robots -= 1 if self.model.robots > 2 else 0
                 return self.pos
         else:
             i = 1 if abs(self.limits[0] - self.limits[2]) % 2 == 0 else 3
             if self.pos == (self.limits[0], self.limits[i]):
+                self.model.robots -= 1 if self.model.robots > 2 else 0
                 return self.pos
 
         # Se posicionan incineradoes como ejemplo visual del recorrido de los robots
-        # self.model.grid.place_agent(Incinerator(self.model), self.pos)
+        #self.model.grid.place_agent(Incinerator(self.model), self.pos)
 
         # Se escoge el límite del eje Y a utilizar del atributo limits conforme a la sección a la que pertenezca
         if sect == 1 or sect == 2:
@@ -197,4 +202,5 @@ class RobotCorner(Agent):
             next_move = self.ret()
         else:
             next_move = self.search()
+        print("Robot", next_move, self.section)
         self.model.grid.move_agent(self, tuple(next_move))

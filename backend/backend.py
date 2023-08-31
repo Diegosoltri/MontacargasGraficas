@@ -12,7 +12,6 @@ games = {}
 
 app = flask.Flask(__name__)
 
-
 def getAgents(model, garbageCells, cornerRobots, centerRobots, incinerators):
     for agent in model.schedule.agents:
         if isinstance(agent, GarbageCell):

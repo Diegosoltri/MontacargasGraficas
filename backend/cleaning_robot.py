@@ -1,7 +1,7 @@
 from mesa import Agent, Model
 from mesa.space import MultiGrid
 from mesa.time import RandomActivation
-from mesa.visualization.UserParam import Slider, Checkbox
+from mesa.visualization.UserParam import Slider, Checkbox, NumberInput
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 from RobotCorner import RobotCorner
@@ -13,9 +13,12 @@ from mesa.visualization.modules import ChartModule
 
 
 class Room(Model):
-    def __init__(self, density=0.01, grid51=True, centerPercentage=0.21):
+    def __init__(self, density=0.01, grid51=True, centerPercentage=0.21, stepLimit = 2000):
         super().__init__()
+        self.robots = 6
+        self.agentSteps = 0
         self.schedule = RandomActivation(self)
+        self.stepLimit = stepLimit
         grid_size = 51 if grid51 else 21  # Se define el tamaño de la malla
 
         center_radius = int(
@@ -72,23 +75,23 @@ class Room(Model):
         for r in robots:
             self.grid.place_agent(r, r.pos)
             self.schedule.add(r)
-            
-        self.datacollector = DataCollector(
-           {"Garbage Cleaned": lambda m: (self.count_type(m, True) / self.count)*100}
-           )
 
     def step(self):
         self.schedule.step()
-        self.datacollector.collect(self)
-        
+
     def count_type(_, model, condition):
-      count = 0
-      for agent in model.schedule.agents:
-         if isinstance(agent, GarbageCell):       
-            if agent.burned == condition:
-                  count += 1
-         print(count)
-      return count
+        count = 0
+        for agent in model.schedule.agents:
+            if isinstance(agent, GarbageCell):
+                if agent.burned == condition:
+                    count += 1
+        if count / model.count == 1:
+            model.running = False
+        return count
+     
+    def step_count(_, model):
+       model.agentSteps += model.robots
+       return model.agentSteps
 
     # Función de uso opcional, permite visualizar el borde de la malla central
     def drawCenter(self, center_radius, c_coords):
