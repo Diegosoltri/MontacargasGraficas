@@ -143,15 +143,19 @@ def planoText():
 
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    
     #Se dibuja cubos
     for obj in cubos:
         obj.draw()
         obj.update()    
     Axis()
+    
+    #Se dibujan basuras
     for obj in basuras:
         obj.draw()
         #obj.update()    
     Axis()
+    
     #Se dibuja el plano gris
     planoText()
     glColor3f(0.3, 0.3, 0.3)
@@ -160,6 +164,18 @@ def display():
     glVertex3d(-DimBoard, 0, DimBoard)
     glVertex3d(DimBoard, 0, DimBoard)
     glVertex3d(DimBoard, 0, -DimBoard)
+    glEnd()
+    
+    # Draw the orange square on the XZ plane
+    glColor3f(1.0, 0.5, 0.0)  # Orange color
+    square_size = 20.0  # Adjust the square size as needed
+
+    half_size = square_size / 2.0
+    glBegin(GL_QUADS)
+    glVertex3d(-half_size, 0.5, -half_size)
+    glVertex3d(-half_size, 0.5, half_size)
+    glVertex3d(half_size, 0.5, half_size)
+    glVertex3d(half_size, 0.5, -half_size)
     glEnd()
     
     # Draw the walls bounding the plane
