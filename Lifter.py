@@ -35,7 +35,8 @@ class Lifter:
         
         # Control variables for platform movement
         self.platformHeight = -1.5
-        self.platformUp = True
+        self.platformUp = False
+        self.platformDown = False
 
     def update(self):
         # Se debe de calcular la posible nueva posicion del cubo a partir de su
@@ -61,7 +62,7 @@ class Lifter:
                 self.platformUp = False
             else:
                 self.platformHeight += delta
-        else:
+        elif self.platformDown:
             if self.platformHeight <= -1.5:
                 self.platformUp = True
             else:
