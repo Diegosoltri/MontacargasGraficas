@@ -13,7 +13,7 @@ from mesa.visualization.modules import ChartModule
 
 
 class Room(Model):
-    def __init__(self, density=0.0, grid51=False, centerPercentage=0.21, stepLimit = 2000):
+    def __init__(self, density=0.01, grid51=False, centerPercentage=0.21, stepLimit = 2000):
         super().__init__()
         self.robots = 6
         self.agentSteps = 0
@@ -21,9 +21,8 @@ class Room(Model):
         self.stepLimit = stepLimit
         grid_size = 51 if grid51 else 21  # Se define el tamaño de la malla
 
-        center_radius = int(
-            grid_size * centerPercentage
-        )  # Se define el radio de la malla central
+        center_radius = int(grid_size * centerPercentage)  # Se define el radio de la malla central
+        
         if (grid_size // 2 - center_radius) % 2 != 0:
             center_radius -= 1  # Se asegura que el tamaño de la malla central no obstruya el camino de los RobotCorner
 

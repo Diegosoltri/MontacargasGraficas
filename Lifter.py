@@ -12,8 +12,9 @@ import math
 
 
 class Lifter:
-    def __init__(self, dim, vel, textures, id, pos):
-        self.id = id # id único del robot
+    def __init__(self, dim, vel, textures, sect, pos):
+        self.loaded = False # indica si el carrito está cargando basura
+        self.sect = sect # id único de la sección del robot
         self.dim = dim
         # Se inicializa una posicion aleatoria en el tablero
         # self.Position = [random.randint(-dim, dim), 6, random.randint(-dim, dim)]
@@ -38,15 +39,28 @@ class Lifter:
         self.platformHeight = -1.5
         self.platformUp = True
 
-    def update(self, x, z):
+
+
+    def update(self, x, z, load):
+        if self.Position[0] < x:
+            self.angle = 0
+        elif self.Position[0] > x:
+            self.angle = 180
+        
+        if self.Position[2] < z:
+            self.angle = 270
+        elif self.Position[2] > z:
+            self.angle = 90
+        
+
         # Se debe de calcular la posible nueva posicion del cubo a partir de su
         # posicion acutual (Position) y el vector de direccion (Direction)
         self.Position[0] = x
         self.Position[2] = z
         
-        self.angle = math.acos(self.Direction[0]) * 180 / math.pi
-        if self.Direction[2] > 0:
-            self.angle = 360 - self.angle
+        # self.angle = math.acos(self.Direction[0]) * 180 / math.pi
+        # if self.Direction[2] > 0:
+        #     self.angle = 360 - self.angle
             
         # Move platform
         delta = 0.01

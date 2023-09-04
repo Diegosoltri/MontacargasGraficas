@@ -20,8 +20,10 @@ import json
 URL_BASE = "http://localhost:5000"
 r = requests.post(URL_BASE+ "/games", allow_redirects=False)
 LOCATION = r.headers["Location"]
-r = requests.get(URL_BASE+LOCATION)
+
 garbageCells = json.loads(r.headers["garbageCells"])
+McenterRobots = json.loads(r.headers["centerRobots"])
+McornerRobots = json.loads(r.headers["cornerRobots"])
 
 screen_width = 500
 screen_height = 500
@@ -31,9 +33,9 @@ ZNEAR=0.01
 ZFAR=5000.0
 #Variables para definir la posicion del observador
 #gluLookAt(EYE_X,EYE_Y,EYE_Z,CENTER_X,CENTER_Y,CENTER_Z,UP_X,UP_Y,UP_Z)
-EYE_X=-1.0
+EYE_X=0.0
 EYE_Y=200.0
-EYE_Z=0.0
+EYE_Z=0.01
 CENTER_X=0
 CENTER_Y=0
 CENTER_Z=0
@@ -50,16 +52,28 @@ Z_MAX=500
 #Dimension del plano
 DimBoard = 210//2
 
+centerCoords = []
+cornerCoords = []
 
+# Se guardan las posiciones iniciales de los robots
+for r in McenterRobots:
+    x,z = r['x']*10 - DimBoard, r['z']*10 - DimBoard
+    centerCoords.append((x,z))
+    
+for r in McornerRobots:
+    x,z = r['x']*10 - DimBoard, r['z']*10 - DimBoard
+    cornerCoords.append((x,z))
+
+# Arreglos para almacenar los robots
 rCorner = []
 rCenter = []
 
 basuras = []
 nbasuras = len(garbageCells)
+print(nbasuras)
 
 # Variables para el control del observador
 theta = 0.0
-radius = 300
 
 # Arreglo para el manejo de texturas
 textures = []
@@ -121,17 +135,16 @@ def Init():
     for i in filenames:
         Texturas(i)
     xtra = 10
-    cornerCoords = [
-    (-DimBoard + xtra, -DimBoard + xtra),
-    (-DimBoard + xtra, DimBoard - xtra),
-    (DimBoard - xtra, DimBoard - xtra),
-    (DimBoard - xtra, -DimBoard + xtra)
-    ]
+
     for i in range(4):
         rCorner.append(Lifter(DimBoard, 1, textures, i, cornerCoords[i]))
         
+    for i in range(2):
+        rCenter.append(Lifter(DimBoard, 1, textures, i, centerCoords[i]))
+        
+        
     for i in range(nbasuras):
-        basuras.append(Basura(DimBoard,1,textures,3))
+        basuras.append(Basura(DimBoard,1,textures,3, (garbageCells[i]['x']*10 - DimBoard, garbageCells[i]['z']*10 - DimBoard)))
         
 def planoText():
     # activate textures
@@ -191,34 +204,51 @@ def drawWalls():
     glVertex3d(DimBoard, wall_height, -DimBoard)
     glVertex3d(-DimBoard, wall_height, -DimBoard)
     glEnd()
-    
+
 
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     r = requests.get(URL_BASE+LOCATION)
-    centerRobots = json.loads(r.headers["centerRobots"])
-    cornerRobots = json.loads(r.headers["cornerRobots"])
+    McenterRobots = json.loads(r.headers["centerRobots"])
+    McornerRobots = json.loads(r.headers["cornerRobots"])
     incinerator = json.loads(r.headers["incinerator"])
     garbageCells = json.loads(r.headers["garbageCells"])
     
-    #Se dibuja cubos
+    # Se dibuja cubos
+    # print("\T----CORNER ROBOTS----")
     for i in range(4):
         rCorner[i].draw()
-        sect = cornerRobots[i]['section']
-        xStep = -DimBoard if sect == 0 or sect == 1 else DimBoard
-        zStep = -DimBoard if sect == 0 or sect == 3 else DimBoard
+        sect = McornerRobots[i]['section']
         
-        rCorner[i].update(cornerRobots[i]['x']*10 - DimBoard, cornerRobots[i]['z']*10 - DimBoard)
-        print("Section:", sect)    
-        print("\tMesa pos:", cornerRobots[i]['x'],cornerRobots[i]['z'])  
-        print("\tOpenGL pos:", cornerRobots[i]['x']*10 - DimBoard, cornerRobots[i]['z']*10 - DimBoard)
-        print()
+        rCorner[i].update(McornerRobots[i]['x']*10 - DimBoard, McornerRobots[i]['z']*10 - DimBoard, McornerRobots[i]['loaded'])
+        # print("Section:", sect)    
+        # print("\tMesa pos:", McornerRobots[i]['x'],McornerRobots[i]['z'])  
+        # print("\tOpenGL pos:", McornerRobots[i]['x']*10 - DimBoard, McornerRobots[i]['z']*10 - DimBoard)
+        # print()
         
-    # rCorner[1].draw()
-    # rCorner[0].draw()
-    # rCorner[0].update(cornerRobots[0]['x']*10 - DimBoard, cornerRobots[0]['z']*10 - DimBoard)  
-    # print("Mesa pos:", cornerRobots[0]['x'],cornerRobots[0]['z'])  
-    # print("OpenGL pos:", cornerRobots[0]['x']*10 - DimBoard, cornerRobots[0]['z']*10 - DimBoard)
+    # print("\T----CENTER ROBOTS----")
+    for i in range(2):
+        rCenter[i].draw()
+        sect = McenterRobots[i]['section']
+        
+        rCenter[i].update(McenterRobots[i]['x']*10 - DimBoard, McenterRobots[i]['z']*10 - DimBoard, McornerRobots[i]['loaded'])
+        # print("Section:", sect)    
+        # print("\tMesa pos:", McenterRobots[i]['x'],McenterRobots[i]['z'])  
+        # print("\tOpenGL pos:", McenterRobots[i]['x']*10 - DimBoard, McenterRobots[i]['z']*10 - DimBoard)
+        # print()
+        
+    # Draw the orange square on the XZ plane
+    on = 0.0 if incinerator[0]['on:'] else 0.5
+    glColor3f(1.0, on, 0.0)  # Orange color
+    square_size = 10.0  # Adjust the square size as needed
+
+    half_size = square_size / 2.0
+    glBegin(GL_QUADS)
+    glVertex3d(-half_size, 0.5, -half_size)
+    glVertex3d(-half_size, 0.5, half_size)
+    glVertex3d(half_size, 0.5, half_size)
+    glVertex3d(half_size, 0.5, -half_size)
+    glEnd()
     
     Axis()
     
@@ -239,17 +269,6 @@ def display():
     
     #drawWalls()
     
-    # Draw the orange square on the XZ plane
-    glColor3f(1.0, 0.5, 0.0)  # Orange color
-    square_size = 20.0  # Adjust the square size as needed
-
-    half_size = square_size / 2.0
-    glBegin(GL_QUADS)
-    glVertex3d(-half_size, 0.5, -half_size)
-    glVertex3d(-half_size, 0.5, half_size)
-    glVertex3d(half_size, 0.5, half_size)
-    glVertex3d(half_size, 0.5, -half_size)
-    glEnd()
     
     
 def lookAt():

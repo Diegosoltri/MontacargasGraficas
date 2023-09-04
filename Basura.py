@@ -11,7 +11,7 @@ import math
 
 
 class Basura:
-    def __init__(self, dim, vel, textures, txtIndex):
+    def __init__(self, dim, vel, textures, txtIndex, pos):
         # Se inicializa las coordenadas de los vertices del cubo
         self.vertexCoords = [1,1,1,1,1,-1,1,-1,-1,1,-1,1,-1,1,1,-1,1,-1,-1,-1,-1,-1,-1,1,]
 
@@ -21,7 +21,7 @@ class Basura:
 
         self.dim = dim
         # Se inicializa una posicion aleatoria en el tablero
-        self.Position = [random.randint(-dim, dim), 2, random.randint(-dim, dim)]
+        self.Position = [pos[0], 2, pos[1]]
         # Inicializar las coordenadas (x,y,z) del cubo en el tablero
         # almacenandolas en el vector Position
         # ...
@@ -64,7 +64,7 @@ class Basura:
     def draw(self):
         glPushMatrix()
         glTranslatef(self.Position[0], self.Position[1], self.Position[2])
-        glScaled(2, 2, 2)
+        glScaled(3, 3, 3)
         glColor3f(1.0, 1.0, 1.0)
         
         glEnable(GL_TEXTURE_2D)
