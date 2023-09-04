@@ -14,17 +14,26 @@ sys.path.append('..')
 from Lifter import Lifter
 from Basura import Basura
 
+import requests
+import json
+
+URL_BASE = "http://localhost:5000"
+r = requests.post(URL_BASE+ "/games", allow_redirects=False)
+LOCATION = r.headers["Location"]
+r = requests.get(URL_BASE+LOCATION)
+garbageCells = json.loads(r.headers["garbageCells"])
+
 screen_width = 500
 screen_height = 500
 #vc para el obser.
 FOVY=60.0
 ZNEAR=0.01
-ZFAR=1800.0
+ZFAR=5000.0
 #Variables para definir la posicion del observador
 #gluLookAt(EYE_X,EYE_Y,EYE_Z,CENTER_X,CENTER_Y,CENTER_Z,UP_X,UP_Y,UP_Z)
-EYE_X=100.0
-EYE_Y=100.0
-EYE_Z=100.0
+EYE_X=-1.0
+EYE_Y=200.0
+EYE_Z=0.0
 CENTER_X=0
 CENTER_Y=0
 CENTER_Z=0
@@ -39,15 +48,14 @@ Y_MAX=500
 Z_MIN=-500
 Z_MAX=500
 #Dimension del plano
-DimBoard = 200
+DimBoard = 210//2
 
 
-#cubo = Cubo(DimBoard, 1.0)
-cubos = []
-ncubos = 20
+rCorner = []
+rCenter = []
 
 basuras = []
-nbasuras = random.randint(10, 100)
+nbasuras = len(garbageCells)
 
 # Variables para el control del observador
 theta = 0.0
@@ -112,9 +120,15 @@ def Init():
     
     for i in filenames:
         Texturas(i)
-    
-    for i in range(ncubos):
-        cubos.append(Lifter(DimBoard, 1, textures))
+    xtra = 10
+    cornerCoords = [
+    (-DimBoard + xtra, -DimBoard + xtra),
+    (-DimBoard + xtra, DimBoard - xtra),
+    (DimBoard - xtra, DimBoard - xtra),
+    (DimBoard - xtra, -DimBoard + xtra)
+    ]
+    for i in range(4):
+        rCorner.append(Lifter(DimBoard, 1, textures, i, cornerCoords[i]))
         
     for i in range(nbasuras):
         basuras.append(Basura(DimBoard,1,textures,3))
@@ -140,49 +154,12 @@ def planoText():
     
     glEnd()
     # glDisable(GL_TEXTURE_2D)
-
-def display():
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     
-    #Se dibuja cubos
-    for obj in cubos:
-        obj.draw()
-        obj.update()    
-    Axis()
-    
-    #Se dibujan basuras
-    for obj in basuras:
-        obj.draw()
-        #obj.update()    
-    Axis()
-    
-    #Se dibuja el plano gris
-    planoText()
-    glColor3f(0.3, 0.3, 0.3)
-    glBegin(GL_QUADS)
-    glVertex3d(-DimBoard, 0, -DimBoard)
-    glVertex3d(-DimBoard, 0, DimBoard)
-    glVertex3d(DimBoard, 0, DimBoard)
-    glVertex3d(DimBoard, 0, -DimBoard)
-    glEnd()
-    
-    # Draw the orange square on the XZ plane
-    glColor3f(1.0, 0.5, 0.0)  # Orange color
-    square_size = 20.0  # Adjust the square size as needed
-
-    half_size = square_size / 2.0
-    glBegin(GL_QUADS)
-    glVertex3d(-half_size, 0.5, -half_size)
-    glVertex3d(-half_size, 0.5, half_size)
-    glVertex3d(half_size, 0.5, half_size)
-    glVertex3d(half_size, 0.5, -half_size)
-    glEnd()
-    
+def drawWalls():
     # Draw the walls bounding the plane
     wall_height = 50.0  # Adjust the wall height as needed
     
     glColor3f(0.8, 0.8, 0.8)  # Light gray color for walls
-    
     # Draw the left wall
     glBegin(GL_QUADS)
     glVertex3d(-DimBoard, 0, -DimBoard)
@@ -214,6 +191,66 @@ def display():
     glVertex3d(DimBoard, wall_height, -DimBoard)
     glVertex3d(-DimBoard, wall_height, -DimBoard)
     glEnd()
+    
+
+def display():
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    r = requests.get(URL_BASE+LOCATION)
+    centerRobots = json.loads(r.headers["centerRobots"])
+    cornerRobots = json.loads(r.headers["cornerRobots"])
+    incinerator = json.loads(r.headers["incinerator"])
+    garbageCells = json.loads(r.headers["garbageCells"])
+    
+    #Se dibuja cubos
+    for i in range(4):
+        rCorner[i].draw()
+        sect = cornerRobots[i]['section']
+        xStep = -DimBoard if sect == 0 or sect == 1 else DimBoard
+        zStep = -DimBoard if sect == 0 or sect == 3 else DimBoard
+        
+        rCorner[i].update(cornerRobots[i]['x']*10 - DimBoard, cornerRobots[i]['z']*10 - DimBoard)
+        print("Section:", sect)    
+        print("\tMesa pos:", cornerRobots[i]['x'],cornerRobots[i]['z'])  
+        print("\tOpenGL pos:", cornerRobots[i]['x']*10 - DimBoard, cornerRobots[i]['z']*10 - DimBoard)
+        print()
+        
+    # rCorner[1].draw()
+    # rCorner[0].draw()
+    # rCorner[0].update(cornerRobots[0]['x']*10 - DimBoard, cornerRobots[0]['z']*10 - DimBoard)  
+    # print("Mesa pos:", cornerRobots[0]['x'],cornerRobots[0]['z'])  
+    # print("OpenGL pos:", cornerRobots[0]['x']*10 - DimBoard, cornerRobots[0]['z']*10 - DimBoard)
+    
+    Axis()
+    
+    #Se dibujan basuras
+    for obj in basuras:
+        obj.draw()
+        #obj.update()    
+    
+    #Se dibuja el plano gris
+    planoText()
+    glColor3f(0.3, 0.3, 0.3)
+    glBegin(GL_QUADS)
+    glVertex3d(-DimBoard, 0, -DimBoard)
+    glVertex3d(-DimBoard, 0, DimBoard)
+    glVertex3d(DimBoard, 0, DimBoard)
+    glVertex3d(DimBoard, 0, -DimBoard)
+    glEnd()
+    
+    #drawWalls()
+    
+    # Draw the orange square on the XZ plane
+    glColor3f(1.0, 0.5, 0.0)  # Orange color
+    square_size = 20.0  # Adjust the square size as needed
+
+    half_size = square_size / 2.0
+    glBegin(GL_QUADS)
+    glVertex3d(-half_size, 0.5, -half_size)
+    glVertex3d(-half_size, 0.5, half_size)
+    glVertex3d(half_size, 0.5, half_size)
+    glVertex3d(half_size, 0.5, -half_size)
+    glEnd()
+    
     
 def lookAt():
     glLoadIdentity()

@@ -12,11 +12,12 @@ import math
 
 
 class Lifter:
-    def __init__(self, dim, vel, textures):
+    def __init__(self, dim, vel, textures, id, pos):
+        self.id = id # id único del robot
         self.dim = dim
         # Se inicializa una posicion aleatoria en el tablero
         # self.Position = [random.randint(-dim, dim), 6, random.randint(-dim, dim)]
-        self.Position = [0, 6, 0]
+        self.Position = [pos[0], 6, pos[1]]
         # Inicializar las coordenadas (x,y,z) del cubo en el tablero
         # almacenandolas en el vector Position
 
@@ -37,19 +38,12 @@ class Lifter:
         self.platformHeight = -1.5
         self.platformUp = True
 
-    def update(self):
+    def update(self, x, z):
         # Se debe de calcular la posible nueva posicion del cubo a partir de su
         # posicion acutual (Position) y el vector de direccion (Direction)
-        newX = self.Position[0] + self.Direction[0] * self.vel
-        newZ = self.Position[2] + self.Direction[2] * self.vel
-        if newX - 10 < -self.dim or newX + 10 > self.dim:
-            self.Direction[0] *= -1
-        else:
-            self.Position[0] = newX
-        if newZ - 10 < -self.dim or newZ + 10 > self.dim:
-            self.Direction[2] *= -1
-        else:
-            self.Position[2] = newZ
+        self.Position[0] = x
+        self.Position[2] = z
+        
         self.angle = math.acos(self.Direction[0]) * 180 / math.pi
         if self.Direction[2] > 0:
             self.angle = 360 - self.angle
@@ -72,7 +66,7 @@ class Lifter:
         glPushMatrix()
         glTranslatef(self.Position[0], self.Position[1], self.Position[2])
         glRotatef(self.angle, 0, 1, 0)
-        glScaled(5, 5, 5)
+        glScaled(4, 4, 4)
         glColor3f(1.0, 1.0, 1.0)
         # front face
         glEnable(GL_TEXTURE_2D)

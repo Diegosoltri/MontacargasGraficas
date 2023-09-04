@@ -13,86 +13,11 @@ import math
 class Basura:
     def __init__(self, dim, vel, textures, txtIndex):
         # Se inicializa las coordenadas de los vertices del cubo
-        self.vertexCoords = [
-            1,
-            1,
-            1,
-            1,
-            1,
-            -1,
-            1,
-            -1,
-            -1,
-            1,
-            -1,
-            1,
-            -1,
-            1,
-            1,
-            -1,
-            1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            1,
-        ]
+        self.vertexCoords = [1,1,1,1,1,-1,1,-1,-1,1,-1,1,-1,1,1,-1,1,-1,-1,-1,-1,-1,-1,1,]
 
-        self.elementArray = [
-            0,
-            1,
-            2,
-            3,
-            0,
-            3,
-            7,
-            4,
-            0,
-            4,
-            5,
-            1,
-            6,
-            2,
-            1,
-            5,
-            6,
-            5,
-            4,
-            7,
-            6,
-            7,
-            3,
-            2,
-        ]
+        self.elementArray = [0,1,2,3,0,3,7,4,0,4,5,1,6,2,1,5,6,5,4,7,6,7,3,2,]
 
-        self.vertexColors = [
-            1,
-            1,
-            1,
-            1,
-            0,
-            0,
-            1,
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-            0,
-            1,
-            1,
-            0,
-            1,
-            0,
-            0,
-            0,
-            0,
-            1,
-            1,
-        ]
+        self.vertexColors = [1,1,1,1,0,0,1,1,0,0,1,0,0,0,1,1,0,1,0,0,0,0,1,1,]
 
         self.dim = dim
         # Se inicializa una posicion aleatoria en el tablero
@@ -139,7 +64,7 @@ class Basura:
     def draw(self):
         glPushMatrix()
         glTranslatef(self.Position[0], self.Position[1], self.Position[2])
-        glScaled(5, 5, 5)
+        glScaled(2, 2, 2)
         glColor3f(1.0, 1.0, 1.0)
         
         glEnable(GL_TEXTURE_2D)

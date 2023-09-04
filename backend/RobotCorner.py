@@ -25,7 +25,7 @@ class RobotCorner(Agent):
 
         # limits representa los 4 límites del área de dicho robot, hay 2 conjuntos de límites, x1,y1 & x2,y2
         # por cada sección se definen sus límites de malla original y malla central
-        xtraL = 3  # an extra limit for the boundaries of the robots, so no trash is left behind
+        xtraL = 1  # an extra limit for the boundaries of the robots, so no trash is left behind
         if section == 0:
             self.limits = (grid_size // 2 + xtraL, grid_size // 2 - 1, 0, 0)
             self.c_coords = c_coords[0]

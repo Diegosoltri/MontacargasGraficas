@@ -13,7 +13,7 @@ from mesa.visualization.modules import ChartModule
 
 
 class Room(Model):
-    def __init__(self, density=0.01, grid51=True, centerPercentage=0.21, stepLimit = 2000):
+    def __init__(self, density=0.0, grid51=False, centerPercentage=0.21, stepLimit = 2000):
         super().__init__()
         self.robots = 6
         self.agentSteps = 0
@@ -58,9 +58,7 @@ class Room(Model):
         robots = []
         robots.append(RobotCorner(self, grid_size, c_coords, 0, (0, 0)))
         robots.append(RobotCorner(self, grid_size, c_coords, 1, (0, grid_size - 1)))
-        robots.append(
-            RobotCorner(self, grid_size, c_coords, 2, (grid_size - 1, grid_size - 1))
-        )
+        robots.append(RobotCorner(self, grid_size, c_coords, 2, (grid_size - 1, grid_size - 1)))
         robots.append(RobotCorner(self, grid_size, c_coords, 3, (grid_size - 1, 0)))
 
         # Se crean los robots del centro

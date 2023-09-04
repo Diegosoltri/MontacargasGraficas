@@ -19,7 +19,7 @@ def getAgents(model, garbageCells, cornerRobots, centerRobots, incinerators):
                 {
                     "id": agent.id,
                     "x": agent.pos[0],
-                    "y": agent.pos[1],
+                    "z": agent.pos[1],
                     "dirty": agent.dirty,
                     "burned": agent.burned,
                 }
@@ -29,7 +29,7 @@ def getAgents(model, garbageCells, cornerRobots, centerRobots, incinerators):
                 {
                     "section": agent.section,
                     "x": agent.pos[0],
-                    "y": agent.pos[1],
+                    "z": agent.pos[1],
                     "loaded": agent.loaded,
                 }
             )
@@ -38,7 +38,7 @@ def getAgents(model, garbageCells, cornerRobots, centerRobots, incinerators):
                 {
                     "section": agent.section,
                     "x": agent.pos[0],
-                    "y": agent.pos[1],
+                    "z": agent.pos[1],
                     "loaded": agent.loaded,
                 }
             )
