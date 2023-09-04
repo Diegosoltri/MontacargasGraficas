@@ -7,10 +7,12 @@ from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
 import math
+import random
 # Se carga el archivo de la clase Cubo
 import sys
 sys.path.append('..')
-from Cubo import Cubo
+from Lifter import Lifter
+from Basura import Basura
 
 screen_width = 500
 screen_height = 500
@@ -20,9 +22,9 @@ ZNEAR=0.01
 ZFAR=1800.0
 #Variables para definir la posicion del observador
 #gluLookAt(EYE_X,EYE_Y,EYE_Z,CENTER_X,CENTER_Y,CENTER_Z,UP_X,UP_Y,UP_Z)
-EYE_X=300.0
-EYE_Y=200.0
-EYE_Z=300.0
+EYE_X=100.0
+EYE_Y=100.0
+EYE_Z=100.0
 CENTER_X=0
 CENTER_Y=0
 CENTER_Z=0
@@ -40,10 +42,12 @@ Z_MAX=500
 DimBoard = 200
 
 
-#cubo = Cubo(DimBoard, 1.0)
-cubos = []
-ncubos = 20
+#lifters
+lifters = []
+nlifters = 5
 
+basuras = []
+nbasuras = random.randint(10, 100)
 
 # Variables para el control del observador
 theta = 0.0
@@ -51,8 +55,7 @@ radius = 300
 
 # Arreglo para el manejo de texturas
 textures = []
-filename1 = "img1.bmp"
-filename2 = ""
+filenames = ["img1.bmp","wheel.jpeg", "walle.jpeg","basura.bmp"]
 
 def Axis():
     glShadeModel(GL_FLAT)
@@ -107,18 +110,21 @@ def Init():
     glEnable(GL_DEPTH_TEST)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
     
-    Texturas(filename1)
-    # Texturas(filename2)
+    for i in filenames:
+        Texturas(i)
     
-    for i in range(ncubos):
-        cubos.append(Cubo(DimBoard, 2.0, textures, 0))
+    for i in range(nlifters):
+        lifters.append(Lifter(DimBoard, 1, textures))
+        
+    for i in range(nbasuras):
+        basuras.append(Basura(DimBoard,1,textures,3))
         
 def planoText():
     # activate textures
     glColor(1.0, 1.0, 1.0)
-    glEnable(GL_TEXTURE_2D)
+    #glEnable(GL_TEXTURE_2D)
     # front face
-    glBindTexture(GL_TEXTURE_2D, textures[0])  # Use the first texture
+    #glBindTexture(GL_TEXTURE_2D, textures[0])  # Use the first texture
     glBegin(GL_QUADS)
     glTexCoord2f(0.0, 0.0)
     glVertex3d(-DimBoard, 0, -DimBoard)
@@ -133,15 +139,23 @@ def planoText():
     glVertex3d(DimBoard, 0, -DimBoard)
     
     glEnd()
-    glDisable(GL_TEXTURE_2D)
+    # glDisable(GL_TEXTURE_2D)
 
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    
     #Se dibuja cubos
-    for obj in cubos:
+    for obj in lifters:
         obj.draw()
         obj.update()    
     Axis()
+    
+    #Se dibujan basuras
+    for obj in basuras:
+        obj.draw()
+        #obj.update()    
+    Axis()
+    
     #Se dibuja el plano gris
     planoText()
     glColor3f(0.3, 0.3, 0.3)
@@ -150,6 +164,18 @@ def display():
     glVertex3d(-DimBoard, 0, DimBoard)
     glVertex3d(DimBoard, 0, DimBoard)
     glVertex3d(DimBoard, 0, -DimBoard)
+    glEnd()
+    
+    # Draw the orange square on the XZ plane
+    glColor3f(1.0, 0.5, 0.0)  # Orange color
+    square_size = 20.0  # Adjust the square size as needed
+
+    half_size = square_size / 2.0
+    glBegin(GL_QUADS)
+    glVertex3d(-half_size, 0.5, -half_size)
+    glVertex3d(-half_size, 0.5, half_size)
+    glVertex3d(half_size, 0.5, half_size)
+    glVertex3d(half_size, 0.5, -half_size)
     glEnd()
     
     # Draw the walls bounding the plane
@@ -199,20 +225,22 @@ def lookAt():
 done = False
 Init()
 while not done:
+    keys = pygame.key.get_pressed()  # Checking pressed keys
+    if keys[pygame.K_RIGHT]:
+        if theta > 359.0:
+            theta = 0
+        else:
+            theta += 1.0
+        lookAt()
+    if keys[pygame.K_LEFT]:
+        if theta < 1.0:
+            theta = 360.0
+        else:
+            theta -= 1.0
+        lookAt()
+
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                if theta > 359.0:
-                    theta = 0
-                else:
-                    theta += 1.0
-                lookAt()
-            if event.key == pygame.K_LEFT:
-                if theta < 1.0:
-                    theta = 360.0
-                else:
-                    theta -= 1.0
-                lookAt()
             if event.key == pygame.K_ESCAPE:
                 done = True
         if event.type == pygame.QUIT:
