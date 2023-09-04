@@ -42,9 +42,9 @@ Z_MAX=500
 DimBoard = 200
 
 
-#cubo = Cubo(DimBoard, 1.0)
-cubos = []
-ncubos = 20
+#lifters
+lifters = []
+nlifters = 5
 
 basuras = []
 nbasuras = random.randint(10, 100)
@@ -113,8 +113,8 @@ def Init():
     for i in filenames:
         Texturas(i)
     
-    for i in range(ncubos):
-        cubos.append(Lifter(DimBoard, 1, textures))
+    for i in range(nlifters):
+        lifters.append(Lifter(DimBoard, 1, textures))
         
     for i in range(nbasuras):
         basuras.append(Basura(DimBoard,1,textures,3))
@@ -145,7 +145,7 @@ def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     
     #Se dibuja cubos
-    for obj in cubos:
+    for obj in lifters:
         obj.draw()
         obj.update()    
     Axis()
