@@ -32,15 +32,32 @@ class Lifter:
 
         # Arreglo de texturas
         self.textures = textures
-        
+
         # Control variables for platform movement
         self.platformHeight = -1.5
         self.platformUp = False
         self.platformDown = False
 
+        # Control variables for returning to center
+        self.delivering = False
+        self.counter = 0
+
+    def search(self):
+        # Change direction to random
+        dirX = random.randint(-10, 10) or 1
+        dirZ = random.randint(-1, 1) or 1
+        magnitude = math.sqrt(dirX**2 + dirZ**2)
+        self.Direction = [(dirX / magnitude), 0, (dirZ / magnitude)]
+
+    def targetCenter(self):
+        # Set direction to center
+        dirX = -self.Position[0]
+        dirZ = -self.Position[2]
+        magnitude = math.sqrt(dirX**2 + dirZ**2)
+        self.Direction = [(dirX / magnitude), 0, (dirZ / magnitude)]
+
     def update(self):
-        # Se debe de calcular la posible nueva posicion del cubo a partir de su
-        # posicion acutual (Position) y el vector de direccion (Direction)
+        # Update position
         newX = self.Position[0] + self.Direction[0] * self.vel
         newZ = self.Position[2] + self.Direction[2] * self.vel
         if newX - 10 < -self.dim or newX + 10 > self.dim:
@@ -54,7 +71,7 @@ class Lifter:
         self.angle = math.acos(self.Direction[0]) * 180 / math.pi
         if self.Direction[2] > 0:
             self.angle = 360 - self.angle
-            
+
         # Move platform
         delta = 0.01
         if self.platformUp:
@@ -67,7 +84,6 @@ class Lifter:
                 self.platformUp = True
             else:
                 self.platformHeight -= delta
-        
 
     def draw(self):
         glPushMatrix()
@@ -130,7 +146,7 @@ class Lifter:
         glEnd()
 
         # Head
-        
+
         glPushMatrix()
         glTranslatef(0, 1.5, 0)
         glScaled(0.8, 0.8, 0.8)
