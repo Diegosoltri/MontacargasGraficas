@@ -44,10 +44,10 @@ DimBoard = 200
 
 #lifters
 lifters = []
-nlifters = 1
+nlifters = 5
 
 basuras = []
-nbasuras = 25  #random.randint(10, 100)
+nbasuras = random.randint(10, 100)
 
 # Variables para el control del observador
 theta = 0.0
@@ -149,7 +149,7 @@ def checkCollisions():
                 if c.status == 0 and b.alive:
                     b.alive = False
                     c.status = 1
-                print("Colision detectada")
+                #print("Colision detectada")
 
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
