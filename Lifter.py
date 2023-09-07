@@ -41,6 +41,15 @@ class Lifter:
         #Control variable for collisions
         self.radiusCol = 5
 
+        #Control variables for animations
+        self.status = 0
+        self.trashID = -1
+        #0 = searching
+        #1 = lifting
+        #2 = delivering
+        #3 = dropping
+        #4 = returning
+
         # Control variables for returning to center
         self.delivering = False
         self.counter = 0
@@ -60,35 +69,60 @@ class Lifter:
         self.Direction = [(dirX / magnitude), 0, (dirZ / magnitude)]
 
     def update(self):
-        # Update position
-        newX = self.Position[0] + self.Direction[0] * self.vel
-        newZ = self.Position[2] + self.Direction[2] * self.vel
-        if newX - 10 < -self.dim or newX + 10 > self.dim:
-            self.Direction[0] *= -1
-        else:
-            self.Position[0] = newX
-        if newZ - 10 < -self.dim or newZ + 10 > self.dim:
-            self.Direction[2] *= -1
-        else:
-            self.Position[2] = newZ
-        self.angle = math.acos(self.Direction[0]) * 180 / math.pi
-        if self.Direction[2] > 0:
-            self.angle = 360 - self.angle
-
-        # Move platform
-        delta = 0.01
-        if self.platformUp:
+        if self.status == 1:
+            delta = 0.01
             if self.platformHeight >= 0:
-                self.platformUp = False
+                self.targetCenter()
+                self.status = 2
             else:
                 self.platformHeight += delta
-        elif self.platformDown:
-            if self.platformHeight <= -1.5:
-                self.platformUp = True
+        elif self.status == 2:
+            newX = self.Position[0] + self.Direction[0] * self.vel
+            newZ = self.Position[2] + self.Direction[2] * self.vel
+            if newX == 0 or newZ == 0:
+                self.status = 3
             else:
-                self.platformHeight -= delta
+                if newX - 10 < -self.dim or newX + 10 > self.dim:
+                    self.Direction[0] *= -1
+                else:
+                    self.Position[0] = newX
+                if newZ - 10 < -self.dim or newZ + 10 > self.dim:
+                    self.Direction[2] *= -1
+                else:
+                    self.Position[2] = newZ
+                self.angle = math.acos(self.Direction[0]) * 180 / math.pi
+                if self.Direction[2] > 0:
+                    self.angle = 360 - self.angle
+        else:
+            # Update position
+            newX = self.Position[0] + self.Direction[0] * self.vel
+            newZ = self.Position[2] + self.Direction[2] * self.vel
+            if newX - 10 < -self.dim or newX + 10 > self.dim:
+                self.Direction[0] *= -1
+            else:
+                self.Position[0] = newX
+            if newZ - 10 < -self.dim or newZ + 10 > self.dim:
+                self.Direction[2] *= -1
+            else:
+                self.Position[2] = newZ
+            self.angle = math.acos(self.Direction[0]) * 180 / math.pi
+            if self.Direction[2] > 0:
+                self.angle = 360 - self.angle
 
-    def draw(self):
+            # Move platform
+            delta = 0.01
+            if self.platformUp:
+                if self.platformHeight >= 0:
+                    self.platformUp = False
+                else:
+                    self.platformHeight += delta
+            elif self.platformDown:
+                if self.platformHeight <= -1.5:
+                    self.platformUp = True
+                else:
+                    self.platformHeight -= delta
+
+    def drawNormal(self):
         glPushMatrix()
         glTranslatef(self.Position[0], self.Position[1], self.Position[2])
         glRotatef(self.angle, 0, 1, 0)
@@ -208,3 +242,93 @@ class Lifter:
         glEnd()
         glPopMatrix()
         glPopMatrix()
+
+    def drawTrash(self):
+        glPushMatrix()
+        glTranslatef(2, self.platformHeight, 0.5)
+        glScaled(2, 2, 2)
+        glColor3f(1.0, 1.0, 1.0)
+
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, self.textures[3])
+
+        glBegin(GL_QUADS)
+
+        # Front face
+        glTexCoord2f(0.0, 0.0)
+        glVertex3d(1, 1, 1)
+        glTexCoord2f(1.0, 0.0)
+        glVertex3d(-1, 1, 1)
+        glTexCoord2f(1.0, 1.0)
+        glVertex3d(-1, -1, 1)
+        glTexCoord2f(0.0, 1.0)
+        glVertex3d(1, -1, 1)
+
+        # Back face
+        glTexCoord2f(0.0, 0.0)
+        glVertex3d(-1, 1, -1)
+        glTexCoord2f(1.0, 0.0)
+        glVertex3d(1, 1, -1)
+        glTexCoord2f(1.0, 1.0)
+        glVertex3d(1, -1, -1)
+        glTexCoord2f(0.0, 1.0)
+        glVertex3d(-1, -1, -1)
+
+        # Left face
+        glTexCoord2f(0.0, 0.0)
+        glVertex3d(-1, 1, 1)
+        glTexCoord2f(1.0, 0.0)
+        glVertex3d(-1, 1, -1)
+        glTexCoord2f(1.0, 1.0)
+        glVertex3d(-1, -1, -1)
+        glTexCoord2f(0.0, 1.0)
+        glVertex3d(-1, -1, 1)
+
+        # Right face
+        glTexCoord2f(0.0, 0.0)
+        glVertex3d(1, 1, -1)
+        glTexCoord2f(1.0, 0.0)
+        glVertex3d(1, 1, 1)
+        glTexCoord2f(1.0, 1.0)
+        glVertex3d(1, -1, 1)
+        glTexCoord2f(0.0, 1.0)
+        glVertex3d(1, -1, -1)
+
+        # Top face
+        glTexCoord2f(0.0, 0.0)
+        glVertex3d(-1, 1, 1)
+        glTexCoord2f(1.0, 0.0)
+        glVertex3d(1, 1, 1)
+        glTexCoord2f(1.0, 1.0)
+        glVertex3d(1, 1, -1)
+        glTexCoord2f(0.0, 1.0)
+        glVertex3d(-1, 1, -1)
+
+        # Bottom face
+        glTexCoord2f(0.0, 0.0)
+        glVertex3d(-1, -1, 1)
+        glTexCoord2f(1.0, 0.0)
+        glVertex3d(1, -1, 1)
+        glTexCoord2f(1.0, 1.0)
+        glVertex3d(1, -1, -1)
+        glTexCoord2f(0.0, 1.0)
+        glVertex3d(-1, -1, -1)
+
+        glEnd()
+        glDisable(GL_TEXTURE_2D)
+
+        glPopMatrix()
+
+    def draw(self):
+        if self.status == 0:
+            self.drawNormal()
+        elif self.status == 1:
+            self.drawNormal()
+            self.drawTrash()
+        elif self.status == 2:
+            self.drawNormal()
+            self.drawTrash()
+        elif self.status == 3:
+            self.drawNormal()
+            self.drawTrash()
+            print("Estatus 3")

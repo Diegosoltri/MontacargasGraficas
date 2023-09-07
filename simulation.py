@@ -114,7 +114,7 @@ def Init():
         Texturas(i)
     
     for i in range(nlifters):
-        lifters.append(Lifter(DimBoard, 1, textures))
+        lifters.append(Lifter(DimBoard, 0.5, textures))
         
     for i in range(nbasuras):
         basuras.append(Basura(DimBoard,1,textures,3))
@@ -146,6 +146,9 @@ def checkCollisions():
         for b in basuras:
             distance = math.sqrt(math.pow((b.Position[0] - c.Position[0]), 2) + math.pow((b.Position[2] - c.Position[2]), 2))
             if distance <= c.radiusCol:
+                if c.status == 0 and b.alive:
+                    b.alive = False
+                    c.status = 1
                 print("Colision detectada")
 
 def display():
