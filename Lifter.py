@@ -109,6 +109,8 @@ class Lifter:
                 self.status = 0
         else:
             # Update position
+            if random.randint(1,1000) == 69:
+                self.search()
             newX = self.Position[0] + self.Direction[0] * self.vel
             newZ = self.Position[2] + self.Direction[2] * self.vel
             if newX - 10 < -self.dim or newX + 10 > self.dim:
@@ -136,7 +138,7 @@ class Lifter:
                 else:
                     self.platformHeight -= delta
 
-    def drawNormal(self):
+    def draw(self):
         glPushMatrix()
         glTranslatef(self.Position[0], self.Position[1], self.Position[2])
         glRotatef(self.angle, 0, 1, 0)
@@ -242,6 +244,8 @@ class Lifter:
 
         # Lifter
         glPushMatrix()
+        if self.status == 1 or self.status == 2 or self.status == 3:
+            self.drawTrash()
         glColor3f(0.0, 0.0, 0.0)
         glTranslatef(0, self.platformHeight, 0)  # Up and down
         glBegin(GL_QUADS)
@@ -259,8 +263,8 @@ class Lifter:
 
     def drawTrash(self):
         glPushMatrix()
-        glTranslatef(2, self.platformHeight, 0.5)
-        glScaled(2, 2, 2)
+        glTranslatef(2, (self.platformHeight + 1.5), 0)
+        glScaled(0.5, 0.5, 0.5)
         glColor3f(1.0, 1.0, 1.0)
 
         glEnable(GL_TEXTURE_2D)
@@ -332,18 +336,3 @@ class Lifter:
         glDisable(GL_TEXTURE_2D)
 
         glPopMatrix()
-
-    def draw(self):
-        if self.status == 0:
-            self.drawNormal()
-        elif self.status == 1:
-            self.drawNormal()
-            self.drawTrash()
-        elif self.status == 2:
-            self.drawNormal()
-            self.drawTrash()
-        elif self.status == 3:
-            self.drawNormal()
-            self.drawTrash()
-        elif self.status == 4:
-            self.drawNormal()
