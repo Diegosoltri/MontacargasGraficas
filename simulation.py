@@ -22,9 +22,9 @@ ZNEAR=0.01
 ZFAR=1800.0
 #Variables para definir la posicion del observador
 #gluLookAt(EYE_X,EYE_Y,EYE_Z,CENTER_X,CENTER_Y,CENTER_Z,UP_X,UP_Y,UP_Z)
-EYE_X=100.0
-EYE_Y=100.0
-EYE_Z=100.0
+EYE_X=200.0
+EYE_Y=150.0
+EYE_Z=200.0
 CENTER_X=0
 CENTER_Y=0
 CENTER_Z=0
@@ -175,7 +175,7 @@ def display():
     for obj in basuras:
         obj.draw()
         #obj.update()    
-    Axis()
+    #Axis()
     
     #Se dibuja el plano gris
     planoText()

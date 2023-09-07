@@ -21,7 +21,7 @@ class Basura:
 
         self.dim = dim
         # Se inicializa una posicion aleatoria en el tablero
-        self.Position = [random.randint(-dim, dim), 2, random.randint(-dim, dim)]
+        self.Position = [random.randint(-dim+15, dim-15), 2, random.randint(-dim+15, dim-15)]
         # Inicializar las coordenadas (x,y,z) del cubo en el tablero
         # almacenandolas en el vector Position
         # ...

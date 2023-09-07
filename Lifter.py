@@ -50,10 +50,6 @@ class Lifter:
         #3 = dropping
         #4 = returning
 
-        # Control variables for returning to center
-        self.delivering = False
-        self.counter = 0
-
     def search(self):
         # Change direction to random
         dirX = random.randint(-10, 10) or 1
