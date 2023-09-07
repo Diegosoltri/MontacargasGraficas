@@ -38,6 +38,9 @@ class Lifter:
         self.platformUp = False
         self.platformDown = False
 
+        #Control variable for collisions
+        self.radiusCol = 5
+
         # Control variables for returning to center
         self.delivering = False
         self.counter = 0

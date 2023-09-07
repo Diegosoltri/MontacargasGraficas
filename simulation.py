@@ -44,10 +44,10 @@ DimBoard = 200
 
 #lifters
 lifters = []
-nlifters = 5
+nlifters = 1
 
 basuras = []
-nbasuras = random.randint(10, 100)
+nbasuras = 25  #random.randint(10, 100)
 
 # Variables para el control del observador
 theta = 0.0
@@ -141,6 +141,13 @@ def planoText():
     glEnd()
     # glDisable(GL_TEXTURE_2D)
 
+def checkCollisions():
+    for c in lifters:
+        for b in basuras:
+            distance = math.sqrt(math.pow((b.Position[0] - c.Position[0]), 2) + math.pow((b.Position[2] - c.Position[2]), 2))
+            if distance <= c.radiusCol:
+                print("Colision detectada")
+
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     
@@ -148,7 +155,18 @@ def display():
     for obj in lifters:
         obj.draw()
         obj.update()    
-    Axis()
+
+    # Draw the orange square on the XZ plane
+    glColor3f(1.0, 0.5, 0.0)  # Orange color
+    square_size = 20.0  # Adjust the square size as needed
+
+    half_size = square_size / 2.0
+    glBegin(GL_QUADS)
+    glVertex3d(-half_size, 0.5, -half_size)
+    glVertex3d(-half_size, 0.5, half_size)
+    glVertex3d(half_size, 0.5, half_size)
+    glVertex3d(half_size, 0.5, -half_size)
+    glEnd()
     
     #Se dibujan basuras
     for obj in basuras:
@@ -164,18 +182,6 @@ def display():
     glVertex3d(-DimBoard, 0, DimBoard)
     glVertex3d(DimBoard, 0, DimBoard)
     glVertex3d(DimBoard, 0, -DimBoard)
-    glEnd()
-    
-    # Draw the orange square on the XZ plane
-    glColor3f(1.0, 0.5, 0.0)  # Orange color
-    square_size = 20.0  # Adjust the square size as needed
-
-    half_size = square_size / 2.0
-    glBegin(GL_QUADS)
-    glVertex3d(-half_size, 0.5, -half_size)
-    glVertex3d(-half_size, 0.5, half_size)
-    glVertex3d(half_size, 0.5, half_size)
-    glVertex3d(half_size, 0.5, -half_size)
     glEnd()
     
     # Draw the walls bounding the plane
@@ -214,6 +220,8 @@ def display():
     glVertex3d(DimBoard, wall_height, -DimBoard)
     glVertex3d(-DimBoard, wall_height, -DimBoard)
     glEnd()
+
+    checkCollisions()
     
 def lookAt():
     glLoadIdentity()
