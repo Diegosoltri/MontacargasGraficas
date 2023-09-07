@@ -77,11 +77,11 @@ class Lifter:
             else:
                 self.platformHeight += delta
         elif self.status == 2:
-            newX = self.Position[0] + self.Direction[0] * self.vel
-            newZ = self.Position[2] + self.Direction[2] * self.vel
-            if newX == 0 or newZ == 0:
+            if self.Position[0] <= 2 or self.Position[2] <= 2:
                 self.status = 3
             else:
+                newX = self.Position[0] + self.Direction[0] * self.vel
+                newZ = self.Position[2] + self.Direction[2] * self.vel
                 if newX - 10 < -self.dim or newX + 10 > self.dim:
                     self.Direction[0] *= -1
                 else:
@@ -93,6 +93,8 @@ class Lifter:
                 self.angle = math.acos(self.Direction[0]) * 180 / math.pi
                 if self.Direction[2] > 0:
                     self.angle = 360 - self.angle
+        elif self.status == 3:
+            print("Estatus 3")
         else:
             # Update position
             newX = self.Position[0] + self.Direction[0] * self.vel
@@ -331,4 +333,3 @@ class Lifter:
         elif self.status == 3:
             self.drawNormal()
             self.drawTrash()
-            print("Estatus 3")

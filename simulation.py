@@ -114,7 +114,7 @@ def Init():
         Texturas(i)
     
     for i in range(nlifters):
-        lifters.append(Lifter(DimBoard, 0.5, textures))
+        lifters.append(Lifter(DimBoard, 0.7, textures))
         
     for i in range(nbasuras):
         basuras.append(Basura(DimBoard,1,textures,3))
