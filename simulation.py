@@ -159,9 +159,9 @@ def display():
         obj.draw()
         obj.update()    
 
-    # Draw the orange square on the XZ plane
-    glColor3f(1.0, 0.5, 0.0)  # Orange color
-    square_size = 20.0  # Adjust the square size as needed
+    # Se dibuja el incinerador
+    glColor3f(1.0, 0.5, 0.0)  # Color: Naranja
+    square_size = 20.0  # Tamaño
 
     half_size = square_size / 2.0
     glBegin(GL_QUADS)
