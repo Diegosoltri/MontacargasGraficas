@@ -1,84 +1,58 @@
 import pygame
 from pygame.locals import *
-
-# Cargamos las bibliotecas de OpenGL
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
-
 import math
 import random
-# Se carga el archivo de la clase Cubo
 import sys
 sys.path.append('..')
 from Lifter import Lifter
 from Basura import Basura
+from trailer import Trailer
+from building import Building
 
-screen_width = 500
-screen_height = 500
-#vc para el obser.
-FOVY=60.0
-ZNEAR=0.01
-ZFAR=1800.0
-#Variables para definir la posicion del observador
-#gluLookAt(EYE_X,EYE_Y,EYE_Z,CENTER_X,CENTER_Y,CENTER_Z,UP_X,UP_Y,UP_Z)
-EYE_X=200.0
-EYE_Y=150.0
-EYE_Z=200.0
-CENTER_X=0
-CENTER_Y=0
-CENTER_Z=0
-UP_X=0
-UP_Y=1
-UP_Z=0
-#Variables para dibujar los ejes del sistema
-X_MIN=-500
-X_MAX=500
-Y_MIN=-500
-Y_MAX=500
-Z_MIN=-500
-Z_MAX=500
-#Dimension del plano
-DimBoard = 200
+# Configuración de pantalla
+screen_width = 1000
+screen_height = 800
 
+# Configuración de la cámara en primera persona
+camera_pos = [0.0, 20.0, 0.0]  # Posición inicial de la cámara
+camera_front = [0.0, 0.0, -1.0]  # Dirección hacia la que mira la cámara
+camera_up = [0.0, 1.0, 0.0]  # Vector hacia arriba
+camera_speed = 5.0  # Velocidad de movimiento de la cámara
+yaw = -90.0  # Rotación horizontal
+pitch = 0.0  # Rotación vertical
+sensitivity = 0.4  # Sensibilidad del mouse
 
-#lifters
+# Dimensiones del entorno
+DimBoard = 500
+drop_off_point = [-50, -100]
+
+# Lifters y basura
 lifters = []
-nlifters = 5
-
+nlifters = 1
 basuras = []
 nbasuras = random.randint(10, 20)
 
-# Variables para el control del observador
-theta = 0.0
-radius = 300
+# Crear una variable global para el tráiler
+trailer = None
+building = None
 
-# Arreglo para el manejo de texturas
+# Texturas
 textures = []
-filenames = ["img1.bmp","wheel.jpeg", "walle.jpeg","basura.bmp"]
+filenames = ["img1.bmp", "wheel.jpeg", "walle.jpeg", "basura.bmp"]
 
-def Axis():
-    glShadeModel(GL_FLAT)
-    glLineWidth(3.0)
-    #X axis in red
-    glColor3f(1.0,0.0,0.0)
-    glBegin(GL_LINES)
-    glVertex3f(X_MIN,0.0,0.0)
-    glVertex3f(X_MAX,0.0,0.0)
-    glEnd()
-    #Y axis in green
-    glColor3f(0.0,1.0,0.0)
-    glBegin(GL_LINES)
-    glVertex3f(0.0,Y_MIN,0.0)
-    glVertex3f(0.0,Y_MAX,0.0)
-    glEnd()
-    #Z axis in blue
-    glColor3f(0.0,0.0,1.0)
-    glBegin(GL_LINES)
-    glVertex3f(0.0,0.0,Z_MIN)
-    glVertex3f(0.0,0.0,Z_MAX)
-    glEnd()
-    glLineWidth(1.0)
+def load_texture(image_path):
+    texture_surface = pygame.image.load(image_path)
+    texture_data = pygame.image.tostring(texture_surface, "RGB", True)
+    width, height = texture_surface.get_size()
+    texture_id = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture_id)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_data)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    return texture_id
 
 def Texturas(filepath):
     textures.append(glGenTextures(1))
@@ -89,176 +63,177 @@ def Texturas(filepath):
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
     image = pygame.image.load(filepath).convert()
-    w, h = image.get_rect().size
+    w, h = image.get_size()
     image_data = pygame.image.tostring(image, "RGBA")
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data)
     glGenerateMipmap(GL_TEXTURE_2D)
-    
-def Init():
-    screen = pygame.display.set_mode(
-        (screen_width, screen_height), DOUBLEBUF | OPENGL)
-    pygame.display.set_caption("OpenGL: cubos")
 
+def Init():
+    global trailer # Asegúrate de que `trailer` sea global
+    global building
+    pygame.init()
+    screen = pygame.display.set_mode((screen_width, screen_height), DOUBLEBUF | OPENGL)
+    pygame.display.set_caption("OpenGL: Primera Persona")
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    gluPerspective(FOVY, screen_width/screen_height, ZNEAR, ZFAR)
-
+    gluPerspective(60, screen_width / screen_height, 0.01, 1800.0)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-    gluLookAt(EYE_X,EYE_Y,EYE_Z,CENTER_X,CENTER_Y,CENTER_Z,UP_X,UP_Y,UP_Z)
-    glClearColor(0,0,0,0)
     glEnable(GL_DEPTH_TEST)
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
-    
+    glEnable(GL_TEXTURE_2D)
     for i in filenames:
         Texturas(i)
-    
-    for i in range(nlifters):
-        lifters.append(Lifter(DimBoard, 0.7, textures))
-        
-    for i in range(nbasuras):
-        basuras.append(Basura(DimBoard,1,textures,3))
-        
-def planoText():
-    # activate textures
-    glColor(1.0, 1.0, 1.0)
-    #glEnable(GL_TEXTURE_2D)
-    # front face
-    #glBindTexture(GL_TEXTURE_2D, textures[0])  # Use the first texture
-    glBegin(GL_QUADS)
-    glTexCoord2f(0.0, 0.0)
-    glVertex3d(-DimBoard, 0, -DimBoard)
-    
-    glTexCoord2f(0.0, 1.0)
-    glVertex3d(-DimBoard, 0, DimBoard)
-    
-    glTexCoord2f(1.0, 1.0)
-    glVertex3d(DimBoard, 0, DimBoard)
-    
-    glTexCoord2f(1.0, 0.0)
-    glVertex3d(DimBoard, 0, -DimBoard)
-    
-    glEnd()
-    # glDisable(GL_TEXTURE_2D)
+    texture_id = load_texture('texturacaja.jpg')
 
-def checkCollisions():
-    for c in lifters:
-        for b in basuras:
-            distance = math.sqrt(math.pow((b.Position[0] - c.Position[0]), 2) + math.pow((b.Position[2] - c.Position[2]), 2))
-            if distance <= c.radiusCol:
-                if c.status == 0 and b.alive:
-                    b.alive = False
-                    c.status = 1
-                #print("Colision detectada")
+    # Generar lifters
+    for _ in range(nlifters):
+        lifters.append(Lifter(DimBoard, 0.7, textures, drop_off_point))
 
-def display():
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    
-    #Se dibuja cubos
-    for obj in lifters:
-        obj.draw()
-        obj.update()    
+    # Generar basuras solo en la carretera horizontal
+    for _ in range(nbasuras):
+        x = random.uniform(-800, 800)  # Carretera horizontal en eje X
+        z = random.uniform(480, 500)  # Carretera horizontal en eje Z
+        basuras.append(Basura(DimBoard, 1, textures, 3, texture_id))
+        basuras[-1].Position = [x, 0, z]  # Asignar posición ajustada
 
-    # Se dibuja el incinerador
-    glColor3f(1.0, 0.5, 0.0)  # Color: Naranja
-    square_size = 20.0  # Tamaño
+    # Crear una instancia del tráiler con posición y rotación específicas
+    trailer = Trailer(
+        obj_file="camion.obj",
+        scale=0.5,
+        position=(0, 0, -DimBoard),  # Posición fija en X, Y, Z
+        rotation=(270, 1, 0, 0)  # Rotar 90 grados sobre el eje X
+    )
 
-    half_size = square_size / 2.0
-    glBegin(GL_QUADS)
-    glVertex3d(-half_size, 0.5, -half_size)
-    glVertex3d(-half_size, 0.5, half_size)
-    glVertex3d(half_size, 0.5, half_size)
-    glVertex3d(half_size, 0.5, -half_size)
-    glEnd()
-    
-    #Se dibujan basuras
-    for obj in basuras:
-        obj.draw()
-        #obj.update()    
-    #Axis()
-    
-    #Se dibuja el plano gris
-    planoText()
-    glColor3f(0.3, 0.3, 0.3)
-    glBegin(GL_QUADS)
-    glVertex3d(-DimBoard, 0, -DimBoard)
-    glVertex3d(-DimBoard, 0, DimBoard)
-    glVertex3d(DimBoard, 0, DimBoard)
-    glVertex3d(DimBoard, 0, -DimBoard)
-    glEnd()
-    
-    # Draw the walls bounding the plane
-    wall_height = 50.0  # Adjust the wall height as needed
-    
-    glColor3f(0.8, 0.8, 0.8)  # Light gray color for walls
-    
-    # Draw the left wall
-    glBegin(GL_QUADS)
-    glVertex3d(-DimBoard, 0, -DimBoard)
-    glVertex3d(-DimBoard, 0, DimBoard)
-    glVertex3d(-DimBoard, wall_height, DimBoard)
-    glVertex3d(-DimBoard, wall_height, -DimBoard)
-    glEnd()
-    
-    # Draw the right wall
-    glBegin(GL_QUADS)
-    glVertex3d(DimBoard, 0, -DimBoard)
-    glVertex3d(DimBoard, 0, DimBoard)
-    glVertex3d(DimBoard, wall_height, DimBoard)
-    glVertex3d(DimBoard, wall_height, -DimBoard)
-    glEnd()
-    
-    # Draw the front wall
-    glBegin(GL_QUADS)
-    glVertex3d(-DimBoard, 0, DimBoard)
-    glVertex3d(DimBoard, 0, DimBoard)
-    glVertex3d(DimBoard, wall_height, DimBoard)
-    glVertex3d(-DimBoard, wall_height, DimBoard)
-    glEnd()
-    
-    # Draw the back wall
-    glBegin(GL_QUADS)
-    glVertex3d(-DimBoard, 0, -DimBoard)
-    glVertex3d(DimBoard, 0, -DimBoard)
-    glVertex3d(DimBoard, wall_height, -DimBoard)
-    glVertex3d(-DimBoard, wall_height, -DimBoard)
-    glEnd()
 
-    checkCollisions()
-    
+    # Crear una instancia del tráiler con posición y rotación específicas
+    building = Building(
+        obj_file="building.obj",
+        scale=0.2,
+        position=(0, 0, 80),  # Posición fija en X, Y, Z
+        rotation=(270, 1, 0, 0)  # Rotar 90 grados sobre el eje X
+    )
+
 def lookAt():
     glLoadIdentity()
-    rad = theta * math.pi / 180
-    newX = EYE_X * math.cos(rad) + EYE_Z * math.sin(rad)
-    newZ = -EYE_X * math.sin(rad) + EYE_Z * math.cos(rad)
-    gluLookAt(newX,EYE_Y,newZ,CENTER_X,CENTER_Y,CENTER_Z,UP_X,UP_Y,UP_Z)
-    
+    center_x = camera_pos[0] + camera_front[0]
+    center_y = camera_pos[1] + camera_front[1]
+    center_z = camera_pos[2] + camera_front[2]
+    gluLookAt(
+        camera_pos[0], camera_pos[1], camera_pos[2],
+        center_x, center_y, center_z,
+        camera_up[0], camera_up[1], camera_up[2]
+    )
+
+def process_mouse_motion(mouse_motion):
+    global yaw, pitch, camera_front
+    x_offset, y_offset = mouse_motion
+    x_offset *= sensitivity
+    y_offset *= sensitivity
+    yaw += x_offset
+    pitch -= y_offset
+    pitch = max(-89.0, min(89.0, pitch))
+    front_x = math.cos(math.radians(yaw)) * math.cos(math.radians(pitch))
+    front_y = math.sin(math.radians(pitch))
+    front_z = math.sin(math.radians(yaw)) * math.cos(math.radians(pitch))
+    camera_front = [front_x, front_y, front_z]
+    norm = math.sqrt(sum(f**2 for f in camera_front))
+    camera_front = [f / norm for f in camera_front]
+
+def display():
+    global trailer
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    planoText()
+    for obj in lifters:
+        obj.draw()
+        obj.update()
+    for obj in basuras:
+        obj.draw()
+
+     # Dibujar el tráiler
+    if trailer:
+        trailer.set_additional_rotation(90, 0, 0, 1)  # Rotar 90 grados sobre el eje z
+        glPushMatrix()
+        glTranslatef(10, 0, 70)  # Posicionar el tráiler en la carretera horizontal
+        trailer.draw()
+        glPopMatrix()
+
+
+
+    # Dibujar el tráiler
+    if building:
+        building.set_additional_rotation(90, 0, 0, 1)  # Rotar 90 grados sobre el eje z
+        glPushMatrix()
+        glTranslatef(10, 0, 70)  # Posicionar el tráiler en la carretera horizontal
+        building.draw()
+        glPopMatrix()
+    pygame.display.flip()
+
+# AQUI SE DIBUJA EL PLANO
+
+def planoText():
+    glColor3f(0.0, 0.0, 1.0)  # Color azul para el resto del terreno
+    glBegin(GL_QUADS)
+    glVertex3d(-DimBoard, 0, -DimBoard)
+    glVertex3d(-DimBoard, 0, DimBoard)
+    glVertex3d(DimBoard, 0, DimBoard)
+    glVertex3d(DimBoard, 0, -DimBoard)
+    glEnd()
+
+    # Carretera vertical (parte de la T)
+    glColor3f(0.3, 0.3, 0.3)  # Color gris para la carretera
+    glBegin(GL_QUADS)
+    glVertex3d(-20, 0.1, -DimBoard)  # Añadir un leve "0.1" en altura para evitar z-fighting
+    glVertex3d(20, 0.1, -DimBoard)
+    glVertex3d(20, 0.1, DimBoard)
+    glVertex3d(-20, 0.1, DimBoard)
+    glEnd()
+
+    # Carretera horizontal (parte superior de la T)
+    glBegin(GL_QUADS)
+    glVertex3d(-800, 0.1, 480)  # La parte superior de la T está en z = 100
+    glVertex3d(800, 0.1, 480)
+    glVertex3d(800, 0.1, 500)
+    glVertex3d(-800, 0.1, 500)
+    glEnd()
+
 done = False
 Init()
-while not done:
-    keys = pygame.key.get_pressed()  # Checking pressed keys
-    if keys[pygame.K_RIGHT]:
-        if theta > 359.0:
-            theta = 0
-        else:
-            theta += 1.0
-        lookAt()
-    if keys[pygame.K_LEFT]:
-        if theta < 1.0:
-            theta = 360.0
-        else:
-            theta -= 1.0
-        lookAt()
+pygame.event.set_grab(True)
+pygame.mouse.set_visible(False)
 
+while not done:
     for event in pygame.event.get():
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                done = True
         if event.type == pygame.QUIT:
             done = True
+        if event.type == pygame.MOUSEMOTION:
+            process_mouse_motion(event.rel)
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_w]:  # Avanzar
+        camera_pos[0] += camera_speed * camera_front[0]
+        camera_pos[1] += camera_speed * camera_front[1]
+        camera_pos[2] += camera_speed * camera_front[2]
+    if keys[pygame.K_s]:  # Retroceder
+        camera_pos[0] -= camera_speed * camera_front[0]
+        camera_pos[1] -= camera_speed * camera_front[1]
+        camera_pos[2] -= camera_speed * camera_front[2]
+    if keys[pygame.K_a]:  # Izquierda
+        right = [
+            camera_front[1] * camera_up[2] - camera_front[2] * camera_up[1],
+            camera_front[2] * camera_up[0] - camera_front[0] * camera_up[2],
+            camera_front[0] * camera_up[1] - camera_front[1] * camera_up[0]
+        ]
+        camera_pos[0] -= camera_speed * right[0]
+        camera_pos[2] -= camera_speed * right[2]
+    if keys[pygame.K_d]:  # Derecha
+        right = [
+            camera_front[1] * camera_up[2] - camera_front[2] * camera_up[1],
+            camera_front[2] * camera_up[0] - camera_front[0] * camera_up[2],
+            camera_front[0] * camera_up[1] - camera_front[1] * camera_up[0]
+        ]
+        camera_pos[0] += camera_speed * right[0]
+        camera_pos[2] += camera_speed * right[2]
+    lookAt()
     display()
-
-    display()
-    pygame.display.flip()
     pygame.time.wait(10)
+
 pygame.quit()
