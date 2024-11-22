@@ -32,8 +32,9 @@ drop_off_point = [-50, -100]
 # Lifters y basura
 lifters = []
 nlifters = 1
+
 basuras = []
-nbasuras = random.randint(10, 20)
+nbasuras = 15
 
 # Crear una variable global para el tráiler
 trailer = None
@@ -41,7 +42,7 @@ building = None
 
 # Texturas
 textures = []
-filenames = ["img1.bmp", "wheel.jpeg", "walle.jpeg", "basura.bmp"]
+filenames = ["img1.bmp", "wheel.jpeg", "walle.jpeg", "texturacaja.jpg"]
 
 def load_texture(image_path):
     texture_surface = pygame.image.load(image_path)
@@ -81,20 +82,31 @@ def Init():
     glLoadIdentity()
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_TEXTURE_2D)
+    
     for i in filenames:
         Texturas(i)
-    texture_id = load_texture('texturacaja.jpg')
+        texture_id = load_texture('texturacaja.jpg')
 
     # Generar lifters
     for _ in range(nlifters):
         lifters.append(Lifter(DimBoard, 0.7, textures, drop_off_point))
 
-    # Generar basuras solo en la carretera horizontal
-    for _ in range(nbasuras):
-        x = random.uniform(-800, 800)  # Carretera horizontal en eje X
-        z = random.uniform(480, 500)  # Carretera horizontal en eje Z
-        basuras.append(Basura(DimBoard, 1, textures, 3, texture_id))
-        basuras[-1].Position = [x, 0, z]  # Asignar posición ajustada
+    # Definir tamaños de las cajas en centímetros
+    sizes_cm = [
+        (10, 10, 10),  # Tamaño 1
+        (50, 50, 50),  # Tamaño 2
+        (70, 70, 70)   # Tamaño 3
+    ]
+
+    for i in range(nbasuras):
+        size_cm = random.choice(sizes_cm)# Ciclar entre los tres tamaños
+        # Convertir centímetros a unidades de OpenGL (ajusta el factor si es necesario)
+        scale_factor = 1  # Suponiendo que 1 unidad = 10 cm
+        scaled_size = (size_cm[0] * scale_factor, size_cm[1] * scale_factor, size_cm[2] * scale_factor)
+        basuras.append(Basura(DimBoard, 1, textures, 3, scaled_size))
+        x = random.uniform(-DimBoard, DimBoard)  # Carretera horizontal en eje X
+        z = random.uniform(DimBoard - 20, DimBoard)  # Carretera horizontal en eje Z
+        basuras[-1].Position = [x,1, z]  # Asignar posición ajustada
 
     # Crear una instancia del tráiler con posición y rotación específicas
     trailer = Trailer(
@@ -190,10 +202,10 @@ def planoText():
 
     # Carretera horizontal (parte superior de la T)
     glBegin(GL_QUADS)
-    glVertex3d(-800, 0.1, 480)  # La parte superior de la T está en z = 100
-    glVertex3d(800, 0.1, 480)
-    glVertex3d(800, 0.1, 500)
-    glVertex3d(-800, 0.1, 500)
+    glVertex3d(-DimBoard, 0.1, DimBoard - 20)
+    glVertex3d(DimBoard, 0.1, DimBoard - 20)
+    glVertex3d(DimBoard, 0.1, DimBoard)
+    glVertex3d(-DimBoard, 0.1, DimBoard)
     glEnd()
 
 done = False
@@ -232,6 +244,9 @@ while not done:
         ]
         camera_pos[0] += camera_speed * right[0]
         camera_pos[2] += camera_speed * right[2]
+    if keys[pygame.K_ESCAPE]:
+        pygame.quit()
+        
     lookAt()
     display()
     pygame.time.wait(10)
