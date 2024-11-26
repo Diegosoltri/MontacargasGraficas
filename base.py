@@ -28,10 +28,10 @@ def get_box_data(n_boxes, dim_board):
     ]
     for _ in range(n_boxes):
         size_cm = random.choice(sizes_cm)
-        scale_factor = 0.5
+        scale_factor = 0.74
         scaled_size = tuple(s * scale_factor for s in size_cm)
         x = random.uniform(-dim_board, dim_board)
-        z = random.uniform(dim_board - 10, dim_board)
+        z = random.uniform(dim_board -15, dim_board)
         y = scaled_size[1] / 10.0
         positions.append((x, y, z))
         sizes.append(scaled_size)

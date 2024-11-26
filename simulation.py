@@ -17,14 +17,14 @@ from amazon import Amazon
 import base
 
 # Screen configuration
-screen_width = 800
-screen_height = 800
+screen_width = 500
+screen_height = 500
 
 # First-person camera configuration
 camera_pos = [0.0, 20.0, 0.0]     # Initial camera position
 camera_front = [0.0, 0.0, -1.0]   # Direction the camera is looking at
 camera_up = [0.0, 1.0, 0.0]       # Up vector
-camera_speed = 5.0                # Camera movement speed
+camera_speed = 10.0                # Camera movement speed
 yaw = -90.0                       # Horizontal rotation
 pitch = 0.0                       # Vertical rotation
 sensitivity = 0.4                 # Mouse sensitivity
@@ -136,17 +136,17 @@ def Init():
         Building(
             obj_file="building.obj",
             scale=0.1,
-            position=(50, 0, 70 + i * 50),  # Position in a row
+            position=(40, 0, 0 + i * 40),  # Position in a row
             rotation=(270, 1, 0, 0)
         )
-        for i in range(5)
+        for i in range(3)
     ]
 
     # Create an instance of Amazon
     amazon = Amazon(
         obj_file="amazon.obj",
         scale=0.5,
-        position=(150, 0, 50),  # Fixed position in X, Y, Z
+        position=(90, 0, 50),  # Fixed position in X, Y, Z
         rotation=(270, 1, 0, 0)
     )
 
