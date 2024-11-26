@@ -11,37 +11,47 @@ from Lifter import Lifter
 from Basura import Basura
 from trailer import Trailer
 from building import Building
+from amazon import Amazon
 
-# Configuración de pantalla
-screen_width = 1000
+# Import your backend module
+import base
+
+# Screen configuration
+screen_width = 800
 screen_height = 800
 
-# Configuración de la cámara en primera persona
-camera_pos = [0.0, 20.0, 0.0]  # Posición inicial de la cámara
-camera_front = [0.0, 0.0, -1.0]  # Dirección hacia la que mira la cámara
-camera_up = [0.0, 1.0, 0.0]  # Vector hacia arriba
-camera_speed = 5.0  # Velocidad de movimiento de la cámara
-yaw = -90.0  # Rotación horizontal
-pitch = 0.0  # Rotación vertical
-sensitivity = 0.4  # Sensibilidad del mouse
+# First-person camera configuration
+camera_pos = [0.0, 20.0, 0.0]     # Initial camera position
+camera_front = [0.0, 0.0, -1.0]   # Direction the camera is looking at
+camera_up = [0.0, 1.0, 0.0]       # Up vector
+camera_speed = 5.0                # Camera movement speed
+yaw = -90.0                       # Horizontal rotation
+pitch = 0.0                       # Vertical rotation
+sensitivity = 0.4                 # Mouse sensitivity
 
-# Dimensiones del entorno
-DimBoard = 500
+# Environment dimensions
+DimBoard = 240
 drop_off_point = [-50, -100]
 
-# Lifters y basura
+# Lifters and trash
 lifters = []
 nlifters = 1
+
 basuras = []
-nbasuras = random.randint(10, 20)
+nbasuras = 15
 
-# Crear una variable global para el tráiler
+# Global variables for trailer and buildings
 trailer = None
-building = None
+buildings = None
 
-# Texturas
+grass_texture = None  # Grass texture
+sky_texture = None    # Sky texture
+wall_texture = None   # Wall texture
+amazon = None
+
+# Textures
 textures = []
-filenames = ["img1.bmp", "wheel.jpeg", "walle.jpeg", "basura.bmp"]
+filenames = ["img1.bmp", "wheel.jpeg", "walle.jpeg", "texturacaja.jpg"]
 
 def load_texture(image_path):
     texture_surface = pygame.image.load(image_path)
@@ -69,11 +79,18 @@ def Texturas(filepath):
     glGenerateMipmap(GL_TEXTURE_2D)
 
 def Init():
-    global trailer # Asegúrate de que `trailer` sea global
-    global building
+    global trailer
+    global buildings
+    global grass_texture
+    global sky_texture
+    global amazon
+    global wall_texture
+    global lifters
+    global basuras
+
     pygame.init()
     screen = pygame.display.set_mode((screen_width, screen_height), DOUBLEBUF | OPENGL)
-    pygame.display.set_caption("OpenGL: Primera Persona")
+    pygame.display.set_caption("OpenGL: First Person")
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     gluPerspective(60, screen_width / screen_height, 0.01, 1800.0)
@@ -85,32 +102,52 @@ def Init():
         Texturas(i)
     texture_id = load_texture('texturacaja.jpg')
 
-    # Generar lifters
-    for _ in range(nlifters):
-        lifters.append(Lifter(DimBoard, 0.7, textures, drop_off_point))
+    # Load textures for grass, sky, and walls
+    grass_texture = load_texture('cesped.jpg')
+    sky_texture = load_texture('cielo.jpeg')
+    wall_texture = load_texture('ciudad.jpg')
 
-    # Generar basuras solo en la carretera horizontal
-    for _ in range(nbasuras):
-        x = random.uniform(-800, 800)  # Carretera horizontal en eje X
-        z = random.uniform(480, 500)  # Carretera horizontal en eje Z
-        basuras.append(Basura(DimBoard, 1, textures, 3, texture_id))
-        basuras[-1].Position = [x, 0, z]  # Asignar posición ajustada
+    # Get lifter data from base.py
+    lifter_data = base.get_lifter_data(nlifters, DimBoard, drop_off_point)
+    lifters = []
+    for pos, dir in zip(lifter_data.positions, lifter_data.directions):
+        lifter = Lifter(DimBoard, 0.7, textures, drop_off_point, position=pos, direction=dir)
+        lifters.append(lifter)
 
-    # Crear una instancia del tráiler con posición y rotación específicas
+    # Get trash data from base.py
+    box_data = base.get_box_data(nbasuras, DimBoard)
+    basuras = []
+    for pos, size in zip(box_data.positions, box_data.sizes):
+        basura = Basura(DimBoard, 1, textures, 3, size)
+        basura.Position = list(pos)
+        basuras.append(basura)
+
+    # Get trailer data from base.py
+    trailer_data = base.get_trailer_data(DimBoard)
     trailer = Trailer(
         obj_file="camion.obj",
         scale=0.5,
-        position=(0, 0, -DimBoard),  # Posición fija en X, Y, Z
-        rotation=(270, 1, 0, 0)  # Rotar 90 grados sobre el eje X
+        position=trailer_data.position,
+        rotation=(270, 1, 0, 0)
     )
 
+    # Create multiple buildings
+    buildings = [
+        Building(
+            obj_file="building.obj",
+            scale=0.1,
+            position=(50, 0, 70 + i * 50),  # Position in a row
+            rotation=(270, 1, 0, 0)
+        )
+        for i in range(5)
+    ]
 
-    # Crear una instancia del tráiler con posición y rotación específicas
-    building = Building(
-        obj_file="building.obj",
-        scale=0.2,
-        position=(0, 0, 80),  # Posición fija en X, Y, Z
-        rotation=(270, 1, 0, 0)  # Rotar 90 grados sobre el eje X
+    # Create an instance of Amazon
+    amazon = Amazon(
+        obj_file="amazon.obj",
+        scale=0.5,
+        position=(150, 0, 50),  # Fixed position in X, Y, Z
+        rotation=(270, 1, 0, 0)
     )
 
 def lookAt():
@@ -139,61 +176,160 @@ def process_mouse_motion(mouse_motion):
     norm = math.sqrt(sum(f**2 for f in camera_front))
     camera_front = [f / norm for f in camera_front]
 
+def draw_skybox():
+    """Draws a sky with texture."""
+    glBindTexture(GL_TEXTURE_2D, sky_texture)
+    glEnable(GL_TEXTURE_2D)
+    glColor3f(1.0, 1.0, 1.0)  # Ensure not to alter the texture color
+
+    size = DimBoard * 2  # Ensure the sky wraps around the entire environment
+
+    glBegin(GL_QUADS)
+    # Top face (sky)
+    glTexCoord2f(0.0, 0.0)
+    glVertex3d(-size, size, -size)
+    glTexCoord2f(1.0, 0.0)
+    glVertex3d(size, size, -size)
+    glTexCoord2f(1.0, 1.0)
+    glVertex3d(size, size, size)
+    glTexCoord2f(0.0, 1.0)
+    glVertex3d(-size, size, size)
+    glEnd()
+
+    glDisable(GL_TEXTURE_2D)
+
+def draw_walls():
+    glBindTexture(GL_TEXTURE_2D, wall_texture)
+    glEnable(GL_TEXTURE_2D)
+    glColor3f(1.0, 1.0, 1.0)  # Ensure not to alter the texture color
+
+    height = DimBoard // 2  # Wall height
+    size = DimBoard         # Wall length
+
+    glBegin(GL_QUADS)
+        # Front wall
+    glTexCoord2f(0.0, 0.0)
+    glVertex3d(-size, 0, size)
+    glTexCoord2f(1.0, 0.0)
+    glVertex3d(size, 0, size)
+    glTexCoord2f(1.0, 1.0)
+    glVertex3d(size, height, size)
+    glTexCoord2f(0.0, 1.0)
+    glVertex3d(-size, height, size)
+
+        # Back wall
+    glTexCoord2f(0.0, 0.0)
+    glVertex3d(size, 0, -size)
+    glTexCoord2f(1.0, 0.0)
+    glVertex3d(-size, 0, -size)
+    glTexCoord2f(1.0, 1.0)
+    glVertex3d(-size, height, -size)
+    glTexCoord2f(0.0, 1.0)
+    glVertex3d(size, height, -size)
+
+        # Left wall
+    glTexCoord2f(0.0, 0.0)
+    glVertex3d(-size, 0, -size)
+    glTexCoord2f(1.0, 0.0)
+    glVertex3d(-size, 0, size)
+    glTexCoord2f(1.0, 1.0)
+    glVertex3d(-size, height, size)
+    glTexCoord2f(0.0, 1.0)
+    glVertex3d(-size, height, -size)
+
+        # Right wall
+    glTexCoord2f(0.0, 0.0)
+    glVertex3d(size, 0, size)
+    glTexCoord2f(1.0, 0.0)
+    glVertex3d(size, 0, -size)
+    glTexCoord2f(1.0, 1.0)
+    glVertex3d(size, height, -size)
+    glTexCoord2f(0.0, 1.0)
+    glVertex3d(size, height, size)
+    glEnd()
+
+    glDisable(GL_TEXTURE_2D)
+
 def display():
-    global trailer
+    global trailer, buildings, amazon
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    draw_skybox()
+    draw_walls()
     planoText()
+
     for obj in lifters:
         obj.draw()
         obj.update()
+
     for obj in basuras:
         obj.draw()
 
-     # Dibujar el tráiler
+    # Draw the trailer
     if trailer:
-        trailer.set_additional_rotation(90, 0, 0, 1)  # Rotar 90 grados sobre el eje z
+        trailer.set_additional_rotation(90, 0, 0, 1)  # Rotate 90 degrees around the z-axis
         glPushMatrix()
-        glTranslatef(10, 0, 70)  # Posicionar el tráiler en la carretera horizontal
+        glTranslatef(10, 0, 70)  # Position the trailer on the horizontal road
         trailer.draw()
         glPopMatrix()
 
-
-
-    # Dibujar el tráiler
-    if building:
-        building.set_additional_rotation(90, 0, 0, 1)  # Rotar 90 grados sobre el eje z
+    # Draw all buildings
+    for building in buildings:
+        building.set_additional_rotation(180, 0, 0, 1)
         glPushMatrix()
-        glTranslatef(10, 0, 70)  # Posicionar el tráiler en la carretera horizontal
+        glTranslatef(*building.position)  # Use the specific position of each building
         building.draw()
+        glPopMatrix()   
+
+    # Draw Amazon
+    if amazon:
+        amazon.set_additional_rotation(180, 0, 0, 1)  # Rotate 180 degrees around the z-axis
+        glPushMatrix()
+        glTranslatef(*amazon.position)  # Use the assigned position for Amazon
+        amazon.draw()
         glPopMatrix()
+
     pygame.display.flip()
 
-# AQUI SE DIBUJA EL PLANO
+# HERE WE DRAW THE PLANE
 
+# Modification in the planoText function to apply the texture
 def planoText():
-    glColor3f(0.0, 0.0, 1.0)  # Color azul para el resto del terreno
+    # Activate the grass texture
+    glBindTexture(GL_TEXTURE_2D, grass_texture)
+    glEnable(GL_TEXTURE_2D)
+    glColor3f(1.0, 1.0, 1.0)  # Ensure the color doesn't modify the texture
+
     glBegin(GL_QUADS)
+    # Assign texture coordinates with glTexCoord2f
+    glTexCoord2f(0.0, 0.0)
     glVertex3d(-DimBoard, 0, -DimBoard)
+    glTexCoord2f(1.0, 0.0)
     glVertex3d(-DimBoard, 0, DimBoard)
+    glTexCoord2f(1.0, 1.0)
     glVertex3d(DimBoard, 0, DimBoard)
+    glTexCoord2f(0.0, 1.0)
     glVertex3d(DimBoard, 0, -DimBoard)
     glEnd()
 
-    # Carretera vertical (parte de la T)
-    glColor3f(0.3, 0.3, 0.3)  # Color gris para la carretera
+    glDisable(GL_TEXTURE_2D)
+
+    # Vertical road (part of the T)
+    glColor3f(0.3, 0.3, 0.3)  # Gray color for the road
     glBegin(GL_QUADS)
-    glVertex3d(-20, 0.1, -DimBoard)  # Añadir un leve "0.1" en altura para evitar z-fighting
+    glVertex3d(-20, 0.1, -DimBoard)  # Add a slight "0.1" in height to avoid z-fighting
     glVertex3d(20, 0.1, -DimBoard)
     glVertex3d(20, 0.1, DimBoard)
     glVertex3d(-20, 0.1, DimBoard)
     glEnd()
 
-    # Carretera horizontal (parte superior de la T)
+    # Horizontal road (top part of the T)
+    glColor3f(0.3, 0.3, 0.3)  # Gray color for the road
     glBegin(GL_QUADS)
-    glVertex3d(-800, 0.1, 480)  # La parte superior de la T está en z = 100
-    glVertex3d(800, 0.1, 480)
-    glVertex3d(800, 0.1, 500)
-    glVertex3d(-800, 0.1, 500)
+    glVertex3d(-DimBoard, 0.1, DimBoard - 20)
+    glVertex3d(DimBoard, 0.1, DimBoard - 20)
+    glVertex3d(DimBoard, 0.1, DimBoard)
+    glVertex3d(-DimBoard, 0.1, DimBoard)
     glEnd()
 
 done = False
@@ -208,15 +344,15 @@ while not done:
         if event.type == pygame.MOUSEMOTION:
             process_mouse_motion(event.rel)
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_w]:  # Avanzar
+    if keys[pygame.K_w]:  # Move forward
         camera_pos[0] += camera_speed * camera_front[0]
         camera_pos[1] += camera_speed * camera_front[1]
         camera_pos[2] += camera_speed * camera_front[2]
-    if keys[pygame.K_s]:  # Retroceder
+    if keys[pygame.K_s]:  # Move backward
         camera_pos[0] -= camera_speed * camera_front[0]
         camera_pos[1] -= camera_speed * camera_front[1]
         camera_pos[2] -= camera_speed * camera_front[2]
-    if keys[pygame.K_a]:  # Izquierda
+    if keys[pygame.K_a]:  # Move left
         right = [
             camera_front[1] * camera_up[2] - camera_front[2] * camera_up[1],
             camera_front[2] * camera_up[0] - camera_front[0] * camera_up[2],
@@ -224,7 +360,7 @@ while not done:
         ]
         camera_pos[0] -= camera_speed * right[0]
         camera_pos[2] -= camera_speed * right[2]
-    if keys[pygame.K_d]:  # Derecha
+    if keys[pygame.K_d]:  # Move right
         right = [
             camera_front[1] * camera_up[2] - camera_front[2] * camera_up[1],
             camera_front[2] * camera_up[0] - camera_front[0] * camera_up[2],
@@ -232,8 +368,9 @@ while not done:
         ]
         camera_pos[0] += camera_speed * right[0]
         camera_pos[2] += camera_speed * right[2]
+
     lookAt()
     display()
-    pygame.time.wait(10)
+    pygame.time.wait(16)
 
 pygame.quit()

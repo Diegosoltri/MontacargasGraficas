@@ -2,8 +2,8 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from objloader import OBJ
 
-class Building:
-    def __init__(self, obj_file="building.obj", scale=1.0, position=(0.0, 0.0, 0.0),
+class Amazon:
+    def __init__(self, obj_file="amazon.obj", scale=1.0, position=(0.0, 0.0, 0.0),
                  rotation=(0.0, 0.0, 0.0, 0.0)):
         """
         Inicializa el edificio utilizando un archivo OBJ.

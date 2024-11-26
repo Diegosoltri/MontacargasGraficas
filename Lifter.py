@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 from Cubo import Cubo
 
-# Cargamos las bibliotecas de OpenGL
+# Load OpenGL libraries
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
@@ -11,157 +11,148 @@ import random
 import math
 
 class Lifter:
-    def __init__(self, dim, vel, textures, drop_off_point):
+    def __init__(self, dim, vel, textures, drop_off_point, position=None, direction=None):
         self.dim = dim
-        # Se inicializa una posición aleatoria en el tablero
-        self.Position = [random.randint(-dim, dim), 6, random.randint(-dim, dim)]
-        # Inicializar las coordenadas (x,y,z) del cubo en el tablero
-        # almacenándolas en el vector Position
-
-        # Se inicializa un vector de dirección aleatorio
-        dirX = random.randint(-10, 10) or 1
-        dirZ = random.randint(-10, 10) or 1
-        magnitude = math.sqrt(dirX**2 + dirZ**2)
-        self.Direction = [(dirX / magnitude), 0, (dirZ / magnitude)]
+        # Use the provided position or generate a random one
+        if position is not None:
+            self.Position = position
+        else:
+            self.Position = [random.randint(-dim, dim), 6, random.randint(-dim, dim)]
+        # Use the provided direction or generate a random one
+        if direction is not None:
+            self.Direction = direction
+        else:
+            dirX = random.randint(-10, 10) or 1
+            dirZ = random.randint(-10, 10) or 1
+            magnitude = math.sqrt(dirX**2 + dirZ**2)
+            self.Direction = [(dirX / magnitude), 0, (dirZ / magnitude)]
+        self.previous_direction = self.Direction.copy()
         self.angle = 0
-        self.vel = vel
-        # El vector aleatorio debe de estar sobre el plano XZ (la altura en Y debe ser fija)
-        # Se normaliza el vector de dirección
 
-        # Arreglo de texturas
+        # Increase movement speed
+        self.vel = vel * 2  # Multiplicamos por 2 para hacerlo más rápido
+
         self.textures = textures
-
-        # Control variables for platform movement
         self.platformHeight = -1.5
         self.platformUp = False
         self.platformDown = False
-
-        # Control variable for collisions
         self.radiusCol = 5
-
-        # Control variables for animations
         self.status = 0
         self.trashID = -1
-        # 0 = buscando
-        # 1 = levantando
-        # 2 = entregando
-        # 3 = soltando
-        # 4 = regresando
-
-        # Nueva posición de entrega
         self.drop_off_point = drop_off_point
         self.lifter_model = OBJ('tinker.obj')
+        self.display_list = None
+        self.need_update_display_list = True  # Indicator to update the display list
+        self.create_display_list()
+
+        # Increase maximum rotation speed
+        self.max_rotation_speed = 100  # Incrementamos a 15 grados por frame
+
+    def create_display_list(self):
+        """Creates a display list for the Lifter."""
+        self.display_list = glGenLists(1)
+        glNewList(self.display_list, GL_COMPILE)
+        self.draw_model()
+        glEndList()
+
+    def update_display_list(self):
+        """Updates the display list if transformations change."""
+        if self.display_list:
+            glDeleteLists(self.display_list, 1)
+        self.create_display_list()
 
     def search(self):
-        # Cambiar dirección a una aleatoria
         dirX = random.randint(-10, 10) or 1
         dirZ = random.randint(-10, 10) or 1
         magnitude = math.sqrt(dirX**2 + dirZ**2)
         self.Direction = [(dirX / magnitude), 0, (dirZ / magnitude)]
+        self.need_update_display_list = True
 
     def targetDropOff(self):
-        # Establecer dirección hacia la posición de entrega
         dirX = self.drop_off_point[0] - self.Position[0]
         dirZ = self.drop_off_point[1] - self.Position[2]
         magnitude = math.sqrt(dirX**2 + dirZ**2)
         self.Direction = [(dirX / magnitude), 0, (dirZ / magnitude)]
+        self.need_update_display_list = True
 
     def update(self):
-        if self.status == 1:
-            delta = 0.01
-            if self.platformHeight >= 0:
-                self.targetDropOff()
-                self.status = 2
-            else:
-                self.platformHeight += delta
-        elif self.status == 2:
-            # Verificar si el robot ha llegado a la posición de entrega
-            dx = self.Position[0] - self.drop_off_point[0]
-            dz = self.Position[2] - self.drop_off_point[1]
-            distance_to_drop_off = math.sqrt(dx * dx + dz * dz)
-            if distance_to_drop_off <= 10:
-                self.status = 3
-            else:
-                # Mover hacia la posición de entrega
-                newX = self.Position[0] + self.Direction[0] * self.vel
-                newZ = self.Position[2] + self.Direction[2] * self.vel
-                # Verificar límites del tablero
-                if newX - 10 < -self.dim or newX + 10 > self.dim:
-                    self.Direction[0] *= -1
-                else:
-                    self.Position[0] = newX
-                if newZ - 10 < -self.dim or newZ + 10 > self.dim:
-                    self.Direction[2] *= -1
-                else:
-                    self.Position[2] = newZ
-                # Actualizar el ángulo de rotación
-                self.angle = math.acos(self.Direction[0]) * 180 / math.pi
-                if self.Direction[2] > 0:
-                    self.angle = 360 - self.angle
-        elif self.status == 3:
-            delta = 0.01
-            if self.platformHeight <= -1.5:
-                self.status = 4
-            else:
-                self.platformHeight -= delta
-        elif self.status == 4:
-            # Regresar al estado de búsqueda
-            dx = self.Position[0] - self.drop_off_point[0]
-            dz = self.Position[2] - self.drop_off_point[1]
-            distance_to_drop_off = math.sqrt(dx * dx + dz * dz)
-            if distance_to_drop_off > 20:
-                self.search()
-                self.status = 0
-            else:
-                self.Position[0] -= (self.Direction[0] * (self.vel / 4))
-                self.Position[2] -= (self.Direction[2] * (self.vel / 4))
-        else:
-            # Actualizar posición
-            if random.randint(1, 1000) == 69:
-                self.search()
-            newX = self.Position[0] + self.Direction[0] * self.vel
-            newZ = self.Position[2] + self.Direction[2] * self.vel
-            if newX - 10 < -self.dim or newX + 10 > self.dim:
-                self.Direction[0] *= -1
-            else:
-                self.Position[0] = newX
-            if newZ - 10 < -self.dim or newZ + 10 > self.dim:
-                self.Direction[2] *= -1
-            else:
-                self.Position[2] = newZ
-            self.angle = math.acos(self.Direction[0]) * 180 / math.pi
-            if self.Direction[2] > 0:
-                self.angle = 360 - self.angle
+        # Save the previous direction
+        self.previous_direction = self.Direction.copy()
 
-            # Mover plataforma (opcional, si quieres animar la plataforma)
-            delta = 0.01
-            if self.platformUp:
-                if self.platformHeight >= 0:
-                    self.platformUp = False
-                else:
-                    self.platformHeight += delta
-            elif self.platformDown:
-                if self.platformHeight <= -1.5:
-                    self.platformUp = True
-                else:
-                    self.platformHeight -= delta
+        # Move the lifter in its current direction
+        self.Position[0] += self.Direction[0] * self.vel
+        self.Position[2] += self.Direction[2] * self.vel
+
+        # Boundary checks and direction changes
+        if abs(self.Position[0]) > self.dim:
+            self.Direction[0] *= -1
+            self.Position[0] = max(min(self.Position[0], self.dim), -self.dim)
+        if abs(self.Position[2]) > self.dim:
+            self.Direction[2] *= -1
+            self.Position[2] = max(min(self.Position[2], self.dim), -self.dim)
+
+        # Randomly change direction occasionally
+        if random.randint(1, 50) == 1:
+            self.search()
+
+        # Calculate the rotation angle using atan2
+        dx = self.Direction[0]
+        dz = self.Direction[2]
+        angle_current = math.degrees(math.atan2(-dz, dx))
+
+        dx_prev = self.previous_direction[0]
+        dz_prev = self.previous_direction[2]
+        angle_previous = math.degrees(math.atan2(-dz_prev, dx_prev))
+
+        # Calculate the angle difference
+        angle_difference = angle_current - angle_previous
+
+        # Adjust the angle difference to be between -180 and 180
+        if angle_difference > 180:
+            angle_difference -= 360
+        elif angle_difference < -180:
+            angle_difference += 360
+
+        # Limit the maximum rotation per update
+        if angle_difference > self.max_rotation_speed:
+            angle_difference = self.max_rotation_speed
+        elif angle_difference < -self.max_rotation_speed:
+            angle_difference = -self.max_rotation_speed
+
+        # Update the total angle of the lifter
+        self.angle += angle_difference
+
+        # Normalize the angle
+        self.angle = self.angle % 360
+
+        self.need_update_display_list = True
+
+        # Update the display list if necessary
+        if self.need_update_display_list:
+            self.update_display_list()
+            self.need_update_display_list = False
 
     def draw(self):
+        """Renders the Lifter using the display list."""
+        glCallList(self.display_list)
+
+    def draw_model(self):
+        """Draws the Lifter model and its components."""
         glPushMatrix()
         glTranslatef(self.Position[0], self.Position[1] + 15, self.Position[2])
         glRotatef(self.angle, 0, 1, 0)
         glScaled(0.5, 0.5, 0.5)
         glColor3f(1.0, 1.0, 1.0)
 
-        # Renderizar el modelo .obj
+        # Render the .obj model
         self.lifter_model.render() 
-             
-        # Plataforma elevadora
+
+        # Lifting platform
         glPushMatrix()
         if self.status in [1, 2, 3]:
             self.drawTrash()
         glColor3f(0.0, 0.0, 0.0)
-        glTranslatef(0, self.platformHeight, 0)  # Arriba y abajo
+        glTranslatef(0, self.platformHeight, 0)  # Move up and down
         glBegin(GL_QUADS)
         glVertex3d(1, 1, 1)
         glVertex3d(1, 1, -1)
@@ -182,7 +173,7 @@ class Lifter:
 
         glBegin(GL_QUADS)
 
-        # Cara frontal
+        # Front face
         glTexCoord2f(0.0, 0.0)
         glVertex3d(1, 1, 1)
         glTexCoord2f(1.0, 0.0)
@@ -192,7 +183,7 @@ class Lifter:
         glTexCoord2f(0.0, 1.0)
         glVertex3d(1, -1, 1)
 
-        # Cara posterior
+        # Back face
         glTexCoord2f(0.0, 0.0)
         glVertex3d(-1, 1, -1)
         glTexCoord2f(1.0, 0.0)
@@ -202,7 +193,7 @@ class Lifter:
         glTexCoord2f(0.0, 1.0)
         glVertex3d(-1, -1, -1)
 
-        # Cara lateral izquierda
+        # Left face
         glTexCoord2f(0.0, 0.0)
         glVertex3d(-1, 1, 1)
         glTexCoord2f(1.0, 0.0)
@@ -212,7 +203,7 @@ class Lifter:
         glTexCoord2f(0.0, 1.0)
         glVertex3d(-1, -1, 1)
 
-        # Cara lateral derecha
+        # Right face
         glTexCoord2f(0.0, 0.0)
         glVertex3d(1, 1, -1)
         glTexCoord2f(1.0, 0.0)
@@ -222,7 +213,7 @@ class Lifter:
         glTexCoord2f(0.0, 1.0)
         glVertex3d(1, -1, -1)
 
-        # Cara superior
+        # Top face
         glTexCoord2f(0.0, 0.0)
         glVertex3d(-1, 1, 1)
         glTexCoord2f(1.0, 0.0)
@@ -232,7 +223,7 @@ class Lifter:
         glTexCoord2f(0.0, 1.0)
         glVertex3d(-1, 1, -1)
 
-        # Cara inferior
+        # Bottom face
         glTexCoord2f(0.0, 0.0)
         glVertex3d(-1, -1, 1)
         glTexCoord2f(1.0, 0.0)

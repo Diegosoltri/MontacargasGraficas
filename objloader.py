@@ -2,9 +2,9 @@ import os
 import pygame
 from OpenGL.GL import *
 
-
 class OBJ:
     generate_on_init = True
+
     @classmethod
     def loadTexture(cls, imagefile):
         surf = pygame.image.load(imagefile)
@@ -24,15 +24,17 @@ class OBJ:
         dirname = os.path.dirname(filename)
 
         for line in open(filename, "r"):
-            if line.startswith('#'): continue
-            values = line.split()
-            if not values: continue
+            if line.startswith('#'):
+                continue
+            values = line.strip().split()
+            if not values:
+                continue
             if values[0] == 'newmtl':
                 mtl = contents[values[1]] = {}
             elif mtl is None:
-                raise ValueError("mtl file doesn't start with newmtl stmt")
+                raise ValueError("El archivo MTL no empieza con 'newmtl'")
             elif values[0] == 'map_Kd':
-                # load the texture referred to by this declaration
+                # Cargar la textura referida por esta declaración
                 mtl[values[0]] = values[1]
                 imagefile = os.path.join(dirname, mtl['map_Kd'])
                 mtl['texture_Kd'] = cls.loadTexture(imagefile)
@@ -41,7 +43,7 @@ class OBJ:
         return contents
 
     def __init__(self, filename, swapyz=False):
-        """Loads a Wavefront OBJ file. """
+        """Carga un archivo OBJ de Wavefront."""
         self.vertices = []
         self.normals = []
         self.texcoords = []
@@ -51,9 +53,11 @@ class OBJ:
 
         material = None
         for line in open(filename, "r"):
-            if line.startswith('#'): continue
-            values = line.split()
-            if not values: continue
+            if line.startswith('#'):
+                continue
+            values = line.strip().split()
+            if not values:
+                continue
             if values[0] == 'v':
                 v = list(map(float, values[1:4]))
                 if swapyz:
@@ -77,11 +81,11 @@ class OBJ:
                 for v in values[1:]:
                     w = v.split('/')
                     face.append(int(w[0]))
-                    if len(w) >= 2 and len(w[1]) > 0:
+                    if len(w) >= 2 and w[1]:
                         texcoords.append(int(w[1]))
                     else:
                         texcoords.append(0)
-                    if len(w) >= 3 and len(w[2]) > 0:
+                    if len(w) >= 3 and w[2]:
                         norms.append(int(w[2]))
                     else:
                         norms.append(0)
@@ -89,9 +93,8 @@ class OBJ:
         if self.generate_on_init:
             self.generate()
 
-    def generate(self):
-        self.gl_list = glGenLists(1)
-        glNewList(self.gl_list, GL_COMPILE)
+    def draw_model(self):
+        """Dibuja el modelo cargado aplicando materiales y texturas."""
         glEnable(GL_TEXTURE_2D)
         glFrontFace(GL_CCW)
         for face in self.faces:
@@ -99,11 +102,11 @@ class OBJ:
 
             mtl = self.mtl[material]
             if 'texture_Kd' in mtl:
-                # use diffuse texmap
+                # Usar textura difusa
                 glBindTexture(GL_TEXTURE_2D, mtl['texture_Kd'])
             else:
-                # just use diffuse colour
-                glColor(*mtl['Kd'])
+                # Usar color difuso
+                glColor(*mtl.get('Kd', [1, 1, 1]))
 
             glBegin(GL_POLYGON)
             for i in range(len(vertices)):
@@ -114,10 +117,18 @@ class OBJ:
                 glVertex3fv(self.vertices[vertices[i] - 1])
             glEnd()
         glDisable(GL_TEXTURE_2D)
+
+    def generate(self):
+        """Genera la lista de visualización del modelo."""
+        self.gl_list = glGenLists(1)
+        glNewList(self.gl_list, GL_COMPILE)
+        self.draw_model()
         glEndList()
 
     def render(self):
+        """Renderiza el modelo utilizando la lista de visualización."""
         glCallList(self.gl_list)
 
     def free(self):
-        glDeleteLists([self.gl_list])
+        """Libera la lista de visualización para liberar memoria."""
+        glDeleteLists(self.gl_list, 1)
