@@ -146,7 +146,7 @@ function initialize_model(dimensions=(49, 49, 49))
     model = ABM(Union{Box, Lift, Trailer}, space; agent_step!)
 
     # Crear tráiler
-    trailer_dimensions = (10, 10, 15)  # Dimensiones del tráiler
+    trailer_dimensions = (5, 5, 8)  # Dimensiones del tráiler
     pos = (2, 1, 2)  # Posición central del tráiler
     create_trailer(model, pos, trailer_dimensions)
 
@@ -195,10 +195,24 @@ function pack_boxes!(trailer::Trailer, boxes::Vector{Box})
 
     packer.pack()
 
+    # Get the Python built-in 'float' function
+    float_py = pybuiltin("float")
+
     for item in trailer.py3dbp_bin.items
+        # Convert each element of item.position using float_py
+        pos = [float_py(x) for x in item.position]
+        println("Posición del item empaquetado: ", pos)
+
+        # Find the corresponding box
         packed_box = findfirst(b -> b.width == item.width && b.height == item.height && b.depth == item.depth, boxes)
         if packed_box !== nothing
             boxes[packed_box].packed = true
+            # Update the position of the box in the model
+            boxes[packed_box].pos = (
+                trailer.pos[1] + Int(pos[1]),  # Adjust for Julia's 1-based indexing
+                trailer.pos[2] + Int(pos[2]),
+                trailer.pos[3] + Int(pos[3])
+            )
             push!(trailer.packed_boxes, boxes[packed_box])
         end
     end

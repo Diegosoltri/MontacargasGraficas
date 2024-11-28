@@ -1,31 +1,35 @@
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from objloader import OBJ
 
 class Trailer:
-    def __init__(self, obj_file="Graficos/camion.obj", scale=1.0, position=(0.0, 0.0, 0.0),
-                 rotation=(0.0, 0.0, 0.0, 0.0)):
-        self.model = OBJ(obj_file)
+    def __init__(self, scale=1.0, position=(0.0, 0.0, 0.0), rotation=(0.0, 0.0, 0.0, 1.0), 
+                 color=(1.0, 0.0, 0.0, 0.5), width=3.0, height=1.5, depth=7.0):
+        """
+        Inicializa el tráiler representado como un prisma rectangular.
+
+        :param scale: Escala del tráiler.
+        :param position: Posición del tráiler en el espacio.
+        :param rotation: Tupla de rotación (ángulo, x, y, z).
+        :param color: Color del tráiler con transparencia (RGBA).
+        :param width: Ancho del tráiler.
+        :param height: Alto del tráiler.
+        :param depth: Profundidad del tráiler.
+        """
         self.scale = scale
         self.position = position
         self.rotation = rotation
-        self.additional_rotation = (0.0, 0.0, 0.0, 0.0)
-        self.display_list = None
-        self.create_display_list()
-
-    def create_display_list(self):
-        """Crea una lista de visualización que compila las operaciones de dibujo."""
-        self.display_list = glGenLists(1)
-        glNewList(self.display_list, GL_COMPILE)
-        self.draw_model()
-        glEndList()
+        self.additional_rotation = (0.0, 0.0, 0.0, 1.0)
+        self.color = color
+        self.width = width
+        self.height = height
+        self.depth = depth
 
     def draw_model(self):
-        """Dibuja el modelo aplicando las transformaciones necesarias."""
+        """Dibuja el tráiler aplicando las transformaciones necesarias."""
         glPushMatrix()
 
-        # Aplicar posición fija
-        glTranslatef(*self.position)
+        # Aplicar posición
+        glTranslatef(self.position[0]+ 20, self.position[1], self.position[2])
 
         # Aplicar rotación inicial
         glRotatef(self.rotation[0], self.rotation[1], self.rotation[2], self.rotation[3])
@@ -37,22 +41,56 @@ class Trailer:
         # Aplicar escalado
         glScalef(self.scale, self.scale, self.scale)
 
-        # Renderizar el modelo
-        self.model.render()
+        # Configurar el color con transparencia
+        glColor4f(*self.color)
+
+        # Dibujar un prisma rectangular (6 caras con diferentes dimensiones)
+        glBegin(GL_QUADS)
+
+        # Front Face
+        glVertex3f(-self.width / 2, -self.height / 2, self.depth / 2)
+        glVertex3f(self.width / 2, -self.height / 2, self.depth / 2)
+        glVertex3f(self.width / 2, self.height / 2, self.depth / 2)
+        glVertex3f(-self.width / 2, self.height / 2, self.depth / 2)
+
+        # Back Face
+        glVertex3f(-self.width / 2, -self.height / 2, -self.depth / 2)
+        glVertex3f(-self.width / 2, self.height / 2, -self.depth / 2)
+        glVertex3f(self.width / 2, self.height / 2, -self.depth / 2)
+        glVertex3f(self.width / 2, -self.height / 2, -self.depth / 2)
+
+        # Left Face
+        glVertex3f(-self.width / 2, -self.height / 2, -self.depth / 2)
+        glVertex3f(-self.width / 2, -self.height / 2, self.depth / 2)
+        glVertex3f(-self.width / 2, self.height / 2, self.depth / 2)
+        glVertex3f(-self.width / 2, self.height / 2, -self.depth / 2)
+
+        # Right Face
+        glVertex3f(self.width / 2, -self.height / 2, self.depth / 2)
+        glVertex3f(self.width / 2, -self.height / 2, -self.depth / 2)
+        glVertex3f(self.width / 2, self.height / 2, -self.depth / 2)
+        glVertex3f(self.width / 2, self.height / 2, self.depth / 2)
+
+        # Top Face
+        glVertex3f(-self.width / 2, self.height / 2, self.depth / 2)
+        glVertex3f(self.width / 2, self.height / 2, self.depth / 2)
+        glVertex3f(self.width / 2, self.height / 2, -self.depth / 2)
+        glVertex3f(-self.width / 2, self.height / 2, -self.depth / 2)
+
+        # Bottom Face
+        glVertex3f(-self.width / 2, -self.height / 2, -self.depth / 2)
+        glVertex3f(self.width / 2, -self.height / 2, -self.depth / 2)
+        glVertex3f(self.width / 2, -self.height / 2, self.depth / 2)
+        glVertex3f(-self.width / 2, -self.height / 2, self.depth / 2)
+
+        glEnd()
 
         glPopMatrix()
 
     def draw(self):
-        """Renderiza el tráiler utilizando la lista de visualización."""
-        glCallList(self.display_list)
+        """Renderiza el tráiler."""
+        self.draw_model()
 
     def set_additional_rotation(self, angle, x, y, z):
-        """Define una rotación adicional al cuerpo y actualiza la lista de visualización."""
+        """Define una rotación adicional y actualiza el modelo."""
         self.additional_rotation = (angle, x, y, z)
-        self.update_display_list()
-
-    def update_display_list(self):
-        """Actualiza la lista de visualización si las transformaciones cambian."""
-        if self.display_list:
-            glDeleteLists(self.display_list, 1)
-        self.create_display_list()

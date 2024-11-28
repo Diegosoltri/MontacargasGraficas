@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 from Cubo import Cubo
 
-# Load OpenGL libraries
+# Importar bibliotecas de OpenGL
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
@@ -13,26 +13,34 @@ import math
 class Lifter:
     def __init__(self, dim, vel, textures, drop_off_point, position=None, direction=None):
         self.dim = dim
-        # Use the provided position or generate a random one
+        # Usar la posición proporcionada o generar una aleatoria
         if position is not None:
             self.Position = position
         else:
             self.Position = [random.randint(-dim, dim), 6, random.randint(-dim, dim)]
-        # Initialize previous position for movement calculation
+        # Guardar el componente Y original
+        self.original_y = self.Position[1]
+        # Inicializar la posición anterior para el cálculo de movimiento
         self.previous_position = self.Position.copy()
-        # Initialize Direction
+        # Inicializar la dirección
         if direction is not None:
             self.Direction = direction
         else:
-            self.Direction = [0, 0, 1]  # Default direction
-        # Initialize previous direction for rotation calculation
+            self.Direction = [0, 0, 1]  # Dirección predeterminada
+        # Inicializar la dirección anterior para el cálculo de rotación
         self.previous_direction = self.Direction.copy()
-        self.angle = 0
+        
+        # Ángulos para la rotación
+        self.base_angle = 0            # Rotación basada en el movimiento
+        self.carrying_angle = 0        # Rotación adicional por carrying_box
+        self.carried_box = None        # Basura que se está transportando
+        self.target_carrying_angle = 0 # Ángulo objetivo para la rotación por carrying_box
 
-        self.carrying_box = False  # Inicialmente no está cargando una caja
-        self.move_count = -1  # Inicializar move_count
+        self.carrying_box = False        # Inicialmente no está cargando una caja
+        self.previous_carrying_box = False  # Para detectar cambios en carrying_box
+        self.move_count = -1             # Inicializar move_count
 
-        self.vel = vel * 2  # Movement speed (not used now since movement comes from API)
+        self.vel = vel * 2  # Velocidad de movimiento (no se usa actualmente, ya que el movimiento viene de la API)
 
         self.textures = textures
         self.platformHeight = -1.5
@@ -44,20 +52,20 @@ class Lifter:
         self.drop_off_point = drop_off_point
         self.lifter_model = OBJ('Graficos/tinker.obj')
         self.display_list = None
-        self.need_update_display_list = True  # Indicator to update the display list
+        self.need_update_display_list = True  # Indicador para actualizar la lista de visualización
         self.create_display_list()
 
-        self.max_rotation_speed = 10  # Maximum rotation speed in degrees per update
+        self.max_rotation_speed = 5  # Velocidad máxima de rotación en grados por actualización
 
     def create_display_list(self):
-        """Creates a display list for the Lifter."""
+        """Crea una lista de visualización para el Lifter."""
         self.display_list = glGenLists(1)
         glNewList(self.display_list, GL_COMPILE)
         self.draw_model()
         glEndList()
 
     def update_display_list(self):
-        """Updates the display list if transformations change."""
+        """Actualiza la lista de visualización si las transformaciones cambian."""
         if self.display_list:
             glDeleteLists(self.display_list, 1)
         self.create_display_list()
@@ -67,21 +75,32 @@ class Lifter:
         Actualiza la posición del Lifter y calcula la dirección y rotación
         si la posición ha cambiado. También actualiza el estado de carrying_box.
         """
+        # Detectar cambio en carrying_box
+        if carrying_box != self.carrying_box:
+            if carrying_box:
+                # Iniciar rotación al recoger una caja
+                self.start_rotation()
+            else:
+                # Volver a la posición original al dejar la caja
+                self.reset_rotation()
+
         # Actualizar carrying_box
+        self.previous_carrying_box = self.carrying_box
         self.carrying_box = carrying_box
 
         # Guardar la posición anterior
         self.previous_position = self.Position.copy()
 
-        # Actualizar posición
-        self.Position = new_position
+        # Mantener Y constante al actualizar la posición
+        current_y = self.original_y
+        self.Position = [new_position[0], current_y, new_position[2]]
 
         # Verificar si la posición ha cambiado
         if self.Position != self.previous_position:
             # Guardar la dirección anterior
             self.previous_direction = self.Direction.copy()
 
-            # Si se proporciona una dirección desde la API, úsala
+            # Si se proporciona una dirección desde la API, usarla
             if direction is not None:
                 self.Direction = direction
             else:
@@ -100,17 +119,44 @@ class Lifter:
                     # Sin movimiento; mantener la dirección anterior
                     self.Direction = self.previous_direction
 
-            # Actualizar el ángulo de rotación
+            # Actualizar el ángulo de rotación de movimiento
             self.update_rotation()
 
             self.need_update_display_list = True
+
+        # Actualizar move_count si es necesario
+        if move_count != self.move_count:
+            self.move_count = move_count
 
         # Actualizar la lista de visualización si es necesario
         if self.need_update_display_list:
             self.update_display_list()
             self.need_update_display_list = False
 
+    def start_rotation(self):
+        """Inicia la rotación del Lifter al recoger una caja."""
+        self.target_carrying_angle = 90  # Rotar 90 grados adicionales
+
+    def reset_rotation(self):
+        """Restablece la rotación del Lifter al dejar una caja."""
+        self.target_carrying_angle = 0  # Volver al ángulo original
+
+    def update(self):
+        """Actualiza la rotación del Lifter hacia el ángulo objetivo."""
+        # Actualizar self.carrying_angle hacia self.target_carrying_angle
+        angle_difference = self.target_carrying_angle - self.carrying_angle
+        if abs(angle_difference) > 0.1:
+            rotation_step = self.max_rotation_speed
+            if abs(angle_difference) < rotation_step:
+                rotation_step = abs(angle_difference)
+            if angle_difference > 0:
+                self.carrying_angle += rotation_step
+            else:
+                self.carrying_angle -= rotation_step
+            self.need_update_display_list = True
+
     def update_rotation(self):
+        """Actualiza self.base_angle basado en la dirección del movimiento."""
         # Calcular el ángulo de rotación usando atan2 en el plano XZ
         dx = self.Direction[0]
         dz = self.Direction[2]
@@ -135,48 +181,29 @@ class Lifter:
         elif angle_difference < -self.max_rotation_speed:
             angle_difference = -self.max_rotation_speed
 
-        # Actualizar el ángulo total del Lifter
-        self.angle += angle_difference
+        # Actualizar el ángulo base del Lifter
+        self.base_angle += angle_difference
 
         # Normalizar el ángulo
-        self.angle = self.angle % 360
+        self.base_angle = self.base_angle % 360
 
     def draw(self):
-        """Renders the Lifter using the display list."""
+        """Renderiza el Lifter utilizando la lista de visualización."""
+        self.update()
         glCallList(self.display_list)
 
     def draw_model(self):
         """Dibuja el modelo del Lifter y sus componentes."""
         glPushMatrix()
-        glTranslatef(self.Position[0], self.Position[1] + 15, self.Position[2])
-        glRotatef(self.angle + 90, 0, 1, 0)
+        # Posicionar el Lifter
+        glTranslatef(self.Position[0], self.Position[1] + 5, self.Position[2])
+        total_angle = self.base_angle + self.carrying_angle
+        glRotatef(total_angle + 90, 0, 1, 0)
         glScaled(0.2, 0.2, 0.2)
         glColor3f(1.0, 1.0, 1.0)
 
         # Renderizar el modelo .obj
-        self.lifter_model.render() 
-
-        # Dibujar la caja si está cargando una
-        if self.carrying_box:
-            self.drawTrash()
+        self.lifter_model.render()
 
         glPopMatrix()
 
-    def drawTrash(self):
-        glPushMatrix()
-        glTranslatef(0, self.lifter_model, 0)
-        glRotatef(270, 1, 0, 0) # Rotar la caja para que esté en la dirección correcta
-        glScaled(0.5, 0.5, 0.5)
-        glColor3f(1.0, 1.0, 1.0)
-
-        glEnable(GL_TEXTURE_2D)
-        glBindTexture(GL_TEXTURE_2D, self.textures[3])
-
-        glBegin(GL_QUADS)
-
-        # (Define the faces of the cube with texture coordinates, as in your code)
-
-        glEnd()
-        glDisable(GL_TEXTURE_2D)
-
-        glPopMatrix()

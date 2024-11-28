@@ -30,7 +30,8 @@ route("/simulations", method = POST) do
                 "id" => agent.id,
                 "pos" => agent.pos,
                 "direction" => agent.direction,
-                "move_count" => agent.move_count
+                "move_count" => agent.move_count,
+                "carrying_box" => agent.carrying_box
             ))
         end
     end
@@ -42,7 +43,8 @@ route("/simulations", method = POST) do
                 "id" => box.id,
                 "pos" => box.pos,
                 "WHD" => [box.width, box.height, box.depth],
-                "color" => "blue"
+                "color" => "blue",
+                "carried" => box.carried
             ))
         end
     end
