@@ -2,7 +2,6 @@ import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from OpenGL.GLUT import *  # Importar GLUT para dibujar cubos de depuración
 import math
 import random
 import sys
@@ -119,14 +118,6 @@ def map_position(pos):
     mapped_z = (pos[2] * SCALE_FACTOR) - (DimBoard / 2)
     return [mapped_x, mapped_y, mapped_z]
 
-def draw_marker(position, color=(1.0, 0.0, 0.0, 1.0)):
-    """Dibuja un cubo en la posición dada para depuración."""
-    glColor4f(*color)
-    glPushMatrix()
-    glTranslatef(*position)
-    glutSolidCube(1.0)  # Usa GLUT para dibujar un cubo sólido
-    glPopMatrix()
-
 def update_camera_front():
     global camera_front
     front_x = math.cos(math.radians(yaw)) * math.cos(math.radians(pitch))
@@ -176,9 +167,6 @@ def Init():
     grass_texture = load_texture('Graficos/cesped.jpg')
     sky_texture = load_texture('Graficos/cielo.jpeg')
     wall_texture = load_texture('Graficos/ciudad.jpg')
-
-    # Inicializar GLUT
-    glutInit()
 
     # **Actualizar camera_front basado en yaw y pitch**
     update_camera_front()
@@ -506,12 +494,6 @@ def display():
     draw_skybox()
     draw_walls()
     planoText()
-
-    # **Dibujar Marcadores de Depuración**
-    if trailer:
-        draw_marker(trailer.position, color=(1.0, 0.0, 0.0, 1.0))  # Rojo para el tráiler
-    if 'drop_off_point_mapped' in globals():
-        draw_marker(drop_off_point_mapped, color=(0.0, 1.0, 0.0, 1.0))  # Verde para el punto de entrega
 
     for obj in lifters:
         obj.draw()
